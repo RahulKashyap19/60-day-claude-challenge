@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Task Compass — Retail Business</title>
+<style>
+  :root{
+    --bg: #0d0f14;
+    --panel: rgba(255,255,255,0.055);
+    --panel-solid: #171a23;
+    --line: rgba(255,255,255,0.13);
+    --text: #eef0f6;
+    --text-dim: #9198ab;
+    --gold: #f2b84b;
+    --gold-dim: rgba(242,184,75,0.18);
+    --danger: #f2745a;
+    --ok: #58d68d;
+    --radius: 18px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; min-height:100%; color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  body{
+    background: linear-gradient(120deg, #0d0f14, #17122a, #0d1c22, #150f1e);
+    background-size: 300% 300%;
+    animation: gradientShift 22s ease infinite;
+    min-height: 100vh;
+  }
+  @keyframes gradientShift{ 0%{background-position:0% 50%;} 50%{background-position:100% 50%;} 100%{background-position:0% 50%;} }
+
+  #app{ min-height:100vh; position:relative; }
+
+  .topbar{ position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:space-between;
+    padding: 16px 26px; background: rgba(13,15,20,0.6); backdrop-filter: blur(14px); border-bottom:1px solid var(--line); flex-wrap:wrap; gap:10px; }
+  .brand{ font-weight:800; font-size:15px; display:flex; align-items:center; gap:8px; }
+  .brand .dot{ width:9px; height:9px; border-radius:50%; background: var(--gold); box-shadow:0 0 10px var(--gold); }
+  .stage-pills{ display:flex; gap:8px; }
+  .stage-pill{ font-size:11px; font-weight:800; padding:5px 12px; border-radius:20px; background: var(--panel);
+    border:1px solid var(--line); color: var(--text-dim); }
+  .stage-pill.active{ background: var(--gold-dim); color: var(--gold); border-color: var(--gold); }
+  .stage-pill.done{ color: var(--ok); }
+  .progress-track{ width:100%; height:6px; background: rgba(255,255,255,0.08); }
+  .progress-fill{ height:100%; background: var(--gold); transition: width 0.5s ease; }
+
+  .stage{ max-width: 880px; margin:0 auto; padding: 34px 24px 80px; position:relative; z-index:2; }
+  .stage-enter{ animation: fadeUp 0.45s ease both; }
+  @keyframes fadeUp{ from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);} }
+
+  .eyebrow{ font-size:12px; letter-spacing:0.13em; text-transform:uppercase; color: var(--gold); font-weight:800; margin:0 0 8px; }
+  h1.headline{ font-size:30px; font-weight:800; margin:0 0 12px; }
+  h2.section-title{ font-size:21px; font-weight:800; margin:0 0 8px; }
+  p.lede{ color: var(--text-dim); font-size:14.8px; line-height:1.68; max-width:640px; }
+
+  .btn{ appearance:none; border:none; cursor:pointer; font-family:inherit; padding:13px 24px; border-radius:30px;
+    font-size:14px; font-weight:800; transition: transform .12s, filter .12s, opacity .12s; }
+  .btn:active{ transform: scale(0.96); }
+  .btn-primary{ background: var(--gold); color:#241a03; box-shadow: 0 8px 22px var(--gold-dim); }
+  .btn-primary:hover{ filter:brightness(1.08); }
+  .btn-primary:disabled{ opacity:0.32; cursor:not-allowed; box-shadow:none; }
+  .btn-ghost{ background: var(--panel); border:1px solid var(--line); color: var(--text); }
+  .btn-ghost:hover{ border-color: var(--gold); color: var(--gold); }
+  .btn-row{ display:flex; gap:14px; margin-top:26px; flex-wrap:wrap; }
+
+  .workplace-grid{ display:grid; grid-template-columns: repeat(2,1fr); gap:12px; margin-top:22px; }
+  .workplace-chip{ background: var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; font-size:13px; }
+
+  /* Ticket-style prompt card */
+  .ticket{ position:relative; background: var(--panel); backdrop-filter: blur(12px); border:1px solid var(--line);
+    border-radius: var(--radius); padding: 22px 24px; margin: 20px 0 8px; overflow:hidden; }
+  .ticket::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:8px; background: var(--gold); }
+  .ticket .tnum{ font-size:11px; color: var(--text-dim); font-weight:700; letter-spacing:0.05em; }
+  .ticket .ttext{ font-size:16.5px; line-height:1.55; margin-top:8px; font-weight:600; }
+
+  /* Role card (collectible) */
+  .role-card{ position:relative; display:flex; flex-direction:column; align-items:center; gap:6px;
+    width: 130px; background: var(--panel-solid); border:1px solid var(--line); border-radius:14px;
+    padding: 14px 10px 12px; cursor:grab; font-family:inherit; color: var(--text); text-align:center;
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease; }
+  .role-card:hover, .role-card:focus-visible{ transform: translateY(-4px); box-shadow: 0 10px 24px rgba(0,0,0,0.4); outline:none; }
+  .role-card .rtop{ position:absolute; top:0; left:0; right:0; height:5px; border-radius:14px 14px 0 0; }
+  .role-card .remoji{ font-size:26px; margin-top:4px; }
+  .role-card .rname{ font-size:12.2px; font-weight:700; line-height:1.3; }
+  .role-card.mini{ width: 108px; padding: 10px 8px 9px; }
+  .role-card.mini .remoji{ font-size:20px; }
+  .role-card.placed-pulse{ animation: snapIn 0.35s ease; }
+  @keyframes snapIn{ 0%{ transform: scale(0.7); } 60%{ transform: scale(1.08); } 100%{ transform: scale(1); } }
+
+  .pool-label{ font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color: var(--text-dim); margin: 18px 0 10px; }
+  .role-pool{ display:flex; flex-wrap:wrap; gap:12px; }
+  .slot-row{ display:flex; flex-wrap:wrap; gap:12px; }
+  .slot{ min-width: 130px; min-height: 130px; border:2px dashed var(--line); border-radius:14px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:10px; flex:1;
+    transition: border-color .15s ease, background .15s ease; }
+  .slot.dragover{ border-color: var(--gold); background: var(--gold-dim); }
+  .slot.filled{ border-style: solid; border-color: rgba(255,255,255,0.2); }
+  .slot .slot-label{ font-size:10px; text-transform:uppercase; letter-spacing:0.06em; color: var(--text-dim); font-weight:700; }
+  .slot .slot-empty{ font-size:12px; color: var(--text-dim); }
+  .slot.primary-slot{ border-color: var(--gold); background: rgba(242,184,75,0.06); flex: 1.3; }
+
+  .reveal-panel{ margin-top:24px; background: var(--panel); backdrop-filter: blur(12px); border:1px solid var(--line);
+    border-radius: var(--radius); padding: 22px 24px; }
+  .reveal-panel .rtag{ font-size:11px; text-transform:uppercase; letter-spacing:0.07em; color: var(--gold); font-weight:800; margin-bottom:6px; display:block; }
+  .reveal-panel p{ margin:0 0 14px; font-size:14.2px; line-height:1.65; }
+  .reveal-panel .chiprow{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+  .chip{ font-size:12px; padding:5px 12px; border-radius:20px; background: var(--panel-solid); border:1px solid var(--line); }
+
+  .flow-track{ position:relative; height: 6px; background: rgba(255,255,255,0.1); border-radius:6px; margin: 18px 0 8px; }
+  .flow-dot{ position:absolute; top:50%; left:0; width:16px; height:16px; border-radius:50%; background: var(--gold);
+    transform: translate(-50%,-50%); box-shadow: 0 0 12px var(--gold); transition: left 1.4s cubic-bezier(.3,.8,.3,1); }
+
+  .comm-flow{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; font-size:13px; margin-top:10px; }
+  .comm-flow .arrow{ color: var(--text-dim); }
+
+  .bar-row{ display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+  .bar-label{ width:160px; font-size:13px; flex-shrink:0; }
+  .bar-track{ flex:1; height:14px; background: var(--panel-solid); border-radius:20px; overflow:hidden; }
+  .bar-fill{ height:100%; background: var(--gold); width:0%; border-radius:20px; transition: width 1.1s cubic-bezier(.2,.8,.3,1); }
+  .bar-pct{ width:44px; text-align:right; font-size:13px; font-weight:800; color: var(--gold); }
+
+  .insight-box{ background: var(--panel); border:1px solid var(--line); border-left:3px solid var(--gold);
+    border-radius: var(--radius); padding: 18px 20px; margin-top:16px; }
+  .insight-box .itag{ font-size:11px; text-transform:uppercase; letter-spacing:0.07em; color: var(--gold); font-weight:800; margin-bottom:6px; display:block; }
+  .insight-box p{ margin:0; font-size:14.2px; line-height:1.68; }
+
+  .confetti-wrap{ position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:50; }
+  .confetti{ position:absolute; top:-30px; font-size:22px; animation: fall linear forwards; }
+  @keyframes fall{ to{ transform: translateY(110vh) rotate(360deg); opacity:0.3; } }
+
+  .toast-wrap{ position:fixed; top:80px; right:20px; display:flex; flex-direction:column; gap:8px; z-index:100; }
+  .toast{ background: var(--panel-solid); border:1px solid var(--line); border-radius:10px; padding:10px 16px;
+    font-size:12.5px; box-shadow:0 10px 26px rgba(0,0,0,0.4); animation: toastIn .25s ease both, toastOut .3s ease 2.1s forwards; max-width:260px; }
+  @keyframes toastIn{ from{opacity:0; transform:translateX(30px);} to{opacity:1; transform:translateX(0);} }
+  @keyframes toastOut{ to{opacity:0; transform:translateX(30px);} }
+
+  ::-webkit-scrollbar{ width:9px; }
+  ::-webkit-scrollbar-thumb{ background: rgba(255,255,255,0.15); border-radius:6px; }
+
+  @media (max-width: 720px){
+    .workplace-grid{ grid-template-columns:1fr; }
+    .slot-row{ flex-direction:column; }
+    .slot{ min-height:90px; }
+    .stage-pills{ display:none; }
+    .role-card{ width: 108px; }
+    .bar-label{ width:110px; font-size:11.5px; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation:none !important; transition:none !important; }
+    body{ animation:none; }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+/* ============================= DATA ============================= */
+const ROLES = [
+  { id:"sales", name:"Sales Associate", emoji:"🛍️", color:"#5b9bf0" },
+  { id:"cashier", name:"Cashier", emoji:"💳", color:"#34d1b8" },
+  { id:"manager", name:"Store Manager", emoji:"🧑‍💼", color:"#f2b84b" },
+  { id:"inventory", name:"Inventory Associate", emoji:"📦", color:"#6bcf7f" },
+  { id:"merch", name:"Visual Merchandiser", emoji:"🎨", color:"#e069c7" },
+  { id:"cs", name:"Customer Service Rep", emoji:"🎧", color:"#a78bfa" },
+  { id:"lp", name:"Loss Prevention", emoji:"🛡️", color:"#f2745a" },
+  { id:"district", name:"District Manager", emoji:"🗺️", color:"#4f6fd1" }
+];
+function roleById(id){ return ROLES.find(function(r){ return r.id === id; }); }
+
+const STAGE1_POOL = [
+  { id:"s1-price", ticket:"TCK-014", text:"A customer says the price on the shelf doesn't match what rang up at checkout.",
+    owner:"cashier", why:"Cashiers resolve real-time transaction discrepancies directly with the customer at the register.",
+    assist:["manager","merch"] },
+  { id:"s1-empty", ticket:"TCK-022", text:"Shelves in the shoe section have been empty for three days.",
+    owner:"inventory", why:"Restocking and inventory counts are the Inventory Associate's core responsibility.",
+    assist:["manager","merch"] },
+  { id:"s1-style", ticket:"TCK-031", text:"A customer wants styling advice for an upcoming event.",
+    owner:"sales", why:"Direct customer engagement and product recommendations are the Sales Associate's job.",
+    assist:["merch","cs"] },
+  { id:"s1-theft", ticket:"TCK-045", text:"Security cameras show a shoplifting pattern near the exit.",
+    owner:"lp", why:"Security and theft incidents are specifically owned by Loss Prevention to investigate and act on.",
+    assist:["manager","cashier"] },
+  { id:"s1-ship", ticket:"TCK-052", text:"A shipment arrived with the wrong product mix.",
+    owner:"inventory", why:"Receiving and verifying shipments against the order is the Inventory Associate's core task.",
+    assist:["manager","district"] },
+  { id:"s1-window", ticket:"TCK-058", text:"The front window display looks outdated compared to the new season's collection.",
+    owner:"merch", why:"Store presentation and displays are the Visual Merchandiser's responsibility.",
+    assist:["manager","sales"] },
+  { id:"s1-return", ticket:"TCK-067", text:"A customer wants to return an item without a receipt.",
+    owner:"manager", why:"Exception-based policy calls like this typically require a manager's judgment.",
+    assist:["cashier","cs"] },
+  { id:"s1-review", ticket:"TCK-073", text:"An online review says an employee was rude to a customer.",
+    owner:"cs", why:"Handling written complaints and public feedback channels is the Customer Service Rep's core role.",
+    assist:["manager","district"] },
+  { id:"s1-registers", ticket:"TCK-081", text:"Multiple registers are down during a busy weekend rush.",
+    owner:"manager", why:"Immediate operational crises during business hours require manager coordination.",
+    assist:["cashier","district"] }
+];
+
+const STAGE2_POOL = [
+  { id:"s2-damaged", ticket:"TCK-101", text:"A customer's online order arrived damaged and they want a replacement.",
+    order:["cs","manager","inventory","cashier"], distract:["merch"],
+    why:"Complaints enter through Customer Service, policy approval goes to the Manager, stock must be verified by Inventory before promising a replacement, and Cashier finalizes the transaction." },
+  { id:"s2-pricematch", ticket:"TCK-108", text:"A customer at the counter wants a price-match on a competitor's advertised sale.",
+    order:["sales","manager","cashier"], distract:["lp","district"],
+    why:"A Sales Associate hears the request on the floor, the Manager makes the policy call on whether to honor it, and the Cashier completes the transaction." },
+  { id:"s2-newstock", ticket:"TCK-114", text:"A shipment of new-season inventory arrived and needs to hit the floor before the weekend.",
+    order:["inventory","manager","merch","sales"], distract:["cs"],
+    why:"Stock is verified first, the Manager prioritizes what goes out, Merchandising builds the display, and Sales Associates learn the product before customers arrive." },
+  { id:"s2-returnpattern", ticket:"TCK-119", text:"Loss Prevention flags a suspicious return pattern from one repeat customer.",
+    order:["lp","manager","district"], distract:["cashier","sales"],
+    why:"Security findings start with Loss Prevention, require the Manager's judgment on this specific case, and a repeat multi-location pattern gets escalated to the District Manager." },
+  { id:"s2-wrongprice", ticket:"TCK-126", text:"A customer's item rings up at the wrong price at checkout.",
+    order:["cashier","merch","manager"], distract:["inventory","district"],
+    why:"The Cashier notices the mismatch first, Merchandising confirms whether the shelf tag itself was wrong, and the Manager authorizes the correct price for the transaction." }
+];
+
+const STAGE3_POOL = [
+  { id:"s3-satisfaction", ticket:"TCK-201", text:"Customer satisfaction scores have dropped sharply across the store this month.",
+    primary:"manager", support:["cs","sales","district"],
+    why:"The Store Manager typically leads the response since it's overall store performance. Customer Service surfaces complaint patterns, Sales Associates reveal floor-level causes, and the District Manager provides context on whether this is isolated or wider.",
+    flow:["cs","sales","manager","district"] },
+  { id:"s3-viral", ticket:"TCK-208", text:"A viral social media post shows a customer having a bad experience in the store.",
+    primary:"manager", support:["cs","district","lp"],
+    why:"The Manager owns the in-store investigation and fix. Customer Service handles the public-facing reply, Loss Prevention may review footage if the post disputes what happened, and the District Manager is briefed given the public visibility.",
+    flow:["cs","manager","lp","district"] },
+  { id:"s3-spike", ticket:"TCK-215", text:"Sales unexpectedly spiked after a product went viral, and the store is now understaffed and low on stock.",
+    primary:"manager", support:["inventory","district","sales"],
+    why:"The Manager coordinates the immediate response. Inventory manages emergency restocking, the District Manager can authorize extra staff hours or transfer stock, and Sales Associates' floor feedback shapes what's actually needed.",
+    flow:["sales","manager","inventory","district"] },
+  { id:"s3-delay", ticket:"TCK-222", text:"A major seasonal shipment is delayed by two weeks, right before the holiday rush.",
+    primary:"district", support:["manager","inventory","merch"],
+    why:"A vendor-level delay affecting timing is usually owned by the District Manager since it may involve vendor negotiation or reallocating stock. The Store Manager adjusts local plans, Inventory tracks what's available, and Merchandising reworks displays around what's in stock.",
+    flow:["district","manager","inventory","merch"] },
+  { id:"s3-reviews", ticket:"TCK-229", text:"Multiple negative reviews mention long checkout lines and unhelpful staff.",
+    primary:"manager", support:["cashier","sales","cs"],
+    why:"Staffing and floor operations are the Manager's direct responsibility. Cashiers and Sales Associates reveal the real bottleneck, and Customer Service tracks whether this is a recurring theme across reviews.",
+    flow:["cs","manager","cashier","sales"] }
+];
+
+/* ============================= HELPERS ============================= */
+function h(tag, attrs){
+  const node = document.createElement(tag);
+  attrs = attrs || {};
+  for (const k in attrs){
+    const v = attrs[k];
+    if (k === "class") node.className = v;
+    else if (k === "style") Object.assign(node.style, v);
+    else if (k.indexOf("on") === 0 && typeof v === "function") node.addEventListener(k.slice(2).toLowerCase(), v);
+    else if (v !== null && v !== undefined) node.setAttribute(k, v);
+  }
+  for (let i = 2; i < arguments.length; i++){
+    const c = arguments[i];
+    const items = Array.isArray(c) ? c : [c];
+    items.forEach(function(item){
+      if (item === null || item === undefined) return;
+      if (typeof item === "string" || typeof item === "number") node.appendChild(document.createTextNode(item));
+      else node.appendChild(item);
+    });
+  }
+  return node;
+}
+function shuffle(arr){ return arr.slice().sort(function(){ return Math.random() - 0.5; }); }
+function pickN(arr, n){ return shuffle(arr).slice(0, n); }
+function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
+
+function toast(msg){
+  const wrap = document.getElementById("toastWrap");
+  const t = h("div", { class: "toast" }, msg);
+  wrap.appendChild(t);
+  setTimeout(function(){ if (t.parentNode) t.parentNode.removeChild(t); }, 2400);
+}
+
+function playTone(freq, dur){
+  try{
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.frequency.value = freq;
+    osc.type = "sine";
+    gain.gain.setValueAtTime(0.06, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime + dur);
+  } catch(e){}
+}
+
+/* ============================= STATE ============================= */
+let state = {
+  screen: "intro",
+  stage1: { tasks: [], index: 0, slots: [null], revealed: false },
+  stage2: { scenarios: [], index: 0, slots: [], revealed: false },
+  stage3: { scenarios: [], index: 0, slots: [null, null, null, null], revealed: false },
+  scores: { ownership: 0, delegation: 0, collaboration: 0, workflow: 0 },
+  flags: { overAssign: 0, underCollab: 0 }
+};
+
+function initGame(){
+  state.stage1.tasks = pickN(STAGE1_POOL, 3);
+  state.stage1.index = 0;
+  state.stage1.slots = [null];
+  state.stage1.revealed = false;
+  state.stage2.scenarios = pickN(STAGE2_POOL, 3);
+  state.stage2.index = 0;
+  state.stage2.slots = new Array(state.stage2.scenarios[0].order.length).fill(null);
+  state.stage2.revealed = false;
+  state.stage3.scenarios = pickN(STAGE3_POOL, 3);
+  state.stage3.index = 0;
+  state.stage3.slots = [null, null, null, null];
+  state.stage3.revealed = false;
+  state.scores = { ownership: 0, delegation: 0, collaboration: 0, workflow: 0 };
+  state.flags = { overAssign: 0, underCollab: 0 };
+}
+
+/* ============================= REUSABLE UI COMPONENTS ============================= */
+function makeRoleCard(role, opts){
+  opts = opts || {};
+  const card = h("button", {
+    type: "button",
+    class: "role-card" + (opts.mini ? " mini" : "") + (opts.pulse ? " placed-pulse" : ""),
+    draggable: "true",
+    "aria-label": role.name,
+    ondragstart: function(e){
+      e.dataTransfer.setData("text/plain", JSON.stringify({ roleId: role.id, from: opts.from !== undefined ? opts.from : null }));
+    },
+    onclick: opts.onClick || function(){}
+  },
+    h("span", { class: "rtop", style: { background: role.color } }),
+    h("span", { class: "remoji" }, role.emoji),
+    h("span", { class: "rname" }, role.name)
+  );
+  return card;
+}
+
+/**
+ * Generic reusable slot-assignment interface.
+ * poolIds: role ids allowed in the pool
+ * slots: array (state) of role id or null, fixed length
+ * slotLabels: array of strings, same length as slots
+ * onChange: fn(newSlotsArray)
+ */
+function buildSlotInterface(poolIds, slots, slotLabels, onChange, opts){
+  opts = opts || {};
+  const wrap = h("div", { class: "slot-interface" });
+  const availableIds = poolIds.filter(function(id){ return slots.indexOf(id) === -1; });
+
+  const poolWrap = h("div", { class: "role-pool" });
+  availableIds.forEach(function(id){
+    const role = roleById(id);
+    poolWrap.appendChild(makeRoleCard(role, {
+      onClick: function(){
+        const idx = slots.indexOf(null);
+        if (idx === -1){ toast("All slots are full — remove one first."); return; }
+        const newSlots = slots.slice();
+        newSlots[idx] = id;
+        playTone(440, 0.12);
+        onChange(newSlots);
+      }
+    }));
+  });
+
+  const slotsWrap = h("div", { class: "slot-row" });
+  slots.forEach(function(val, idx){
+    const isPrimary = opts.primaryIndex === idx;
+    const slotEl = h("div", { class: "slot" + (val ? " filled" : "") + (isPrimary ? " primary-slot" : "") });
+    slotEl.addEventListener("dragover", function(e){ e.preventDefault(); slotEl.classList.add("dragover"); });
+    slotEl.addEventListener("dragleave", function(){ slotEl.classList.remove("dragover"); });
+    slotEl.addEventListener("drop", function(e){
+      e.preventDefault();
+      slotEl.classList.remove("dragover");
+      let data;
+      try { data = JSON.parse(e.dataTransfer.getData("text/plain")); } catch(err){ return; }
+      const newSlots = slots.slice();
+      if (data.from !== null && data.from !== undefined){
+        const tmp = newSlots[idx];
+        newSlots[idx] = data.roleId;
+        newSlots[data.from] = tmp;
+      } else {
+        newSlots[idx] = data.roleId;
+      }
+      playTone(520, 0.12);
+      onChange(newSlots);
+    });
+    slotEl.appendChild(h("span", { class: "slot-label" }, slotLabels[idx]));
+    if (val){
+      const role = roleById(val);
+      slotEl.appendChild(makeRoleCard(role, {
+        mini: true, pulse: true, from: idx,
+        onClick: function(){
+          const newSlots = slots.slice();
+          newSlots[idx] = null;
+          onChange(newSlots);
+        }
+      }));
+    } else {
+      slotEl.appendChild(h("span", { class: "slot-empty" }, "Drop or tap a role"));
+    }
+    slotsWrap.appendChild(slotEl);
+  });
+
+  wrap.appendChild(h("div", { class: "pool-label" }, "Available Roles"));
+  wrap.appendChild(poolWrap);
+  wrap.appendChild(h("div", { class: "pool-label" }, opts.slotsHeading || "Assignment"));
+  wrap.appendChild(slotsWrap);
+  return wrap;
+}
+
+/* ============================= TOP BAR ============================= */
+function overallProgress(){
+  const perStage = 100 / 3;
+  if (state.screen === "stage1") return (state.stage1.index / 3) * perStage;
+  if (state.screen === "stage2") return perStage + (state.stage2.index / 3) * perStage;
+  if (state.screen === "stage3") return perStage * 2 + (state.stage3.index / 3) * perStage;
+  if (state.screen === "final") return 100;
+  return 0;
+}
+function TopBar(){
+  const pct = overallProgress();
+  function pillClass(stageName){
+    if (state.screen === stageName) return "stage-pill active";
+    const order = ["stage1","stage2","stage3"];
+    if (order.indexOf(state.screen) > order.indexOf(stageName) || state.screen === "final") return "stage-pill done";
+    return "stage-pill";
+  }
+  return h("div", {},
+    h("div", { class: "topbar" },
+      h("div", { class: "brand" }, h("span", { class: "dot" }), "🧭 Task Compass"),
+      h("div", { class: "stage-pills" },
+        h("span", { class: pillClass("stage1") }, "1 · Ownership"),
+        h("span", { class: pillClass("stage2") }, "2 · Routing"),
+        h("span", { class: pillClass("stage3") }, "3 · Collaboration")
+      )
+    ),
+    h("div", { class: "progress-track" }, h("div", { class: "progress-fill", style: { width: pct + "%" } }))
+  );
+}
+
+/* ============================= INTRO ============================= */
+function IntroScreen(){
+  return h("div", { class: "stage stage-enter" },
+    h("p", { class: "eyebrow" }, "A Management Simulation"),
+    h("h1", { class: "headline" }, "Task Compass"),
+    h("p", { class: "lede" }, "Learn how work flows through real organizations."),
+    h("p", { class: "lede" }, "You're stepping into a retail business. Across three stages you'll decide who owns a task, how work should route between people, and who needs to be pulled in when a problem gets bigger than one person."),
+    h("div", { class: "workplace-grid" },
+      ROLES.map(function(r){
+        return h("div", { class: "workplace-chip" }, r.emoji + " " + r.name);
+      })
+    ),
+    h("div", { class: "btn-row" },
+      h("button", { class: "btn btn-primary", onclick: function(){ initGame(); state.screen = "stage1"; render(); } }, "Start the Simulation →")
+    )
+  );
+}
+
+/* ============================= STAGE 1 ============================= */
+function Stage1Screen(){
+  const s1 = state.stage1;
+  const task = s1.tasks[s1.index];
+  const wrap = h("div", { class: "stage stage-enter" },
+    h("p", { class: "eyebrow" }, "Stage 1 · Who Owns This?"),
+    h("h2", { class: "section-title" }, "Question " + (s1.index + 1) + " of 3"),
+    h("div", { class: "ticket" },
+      h("div", { class: "tnum" }, "🎫 " + task.ticket),
+      h("div", { class: "ttext" }, task.text)
+    )
+  );
+
+  if (!s1.revealed){
+    wrap.appendChild(buildSlotInterface(
+      ROLES.map(function(r){ return r.id; }),
+      s1.slots,
+      ["Primary Owner"],
+      function(newSlots){ s1.slots = newSlots; render(); }
+    ));
+    const ready = s1.slots[0] !== null;
+    wrap.appendChild(h("div", { class: "btn-row" },
+      h("button", { class: "btn btn-primary", disabled: ready ? null : true, onclick: function(){
+        const chosen = s1.slots[0];
+        if (chosen === task.owner){
+          state.scores.ownership += 10;
+          s1.result = { type: "correct" };
+        } else if (task.assist.indexOf(chosen) !== -1){
+          state.scores.ownership += 4;
+          state.scores.delegation += 3;
+          s1.result = { type: "partial" };
+        } else {
+          s1.result = { type: "miss" };
+        }
+        s1.revealed = true;
+        render();
+      }}, "Submit Decision")
+    ));
+  } else {
+    const owner = roleById(task.owner);
+    const assistList = task.assist.map(function(id){ return roleById(id).name; }).join(", ");
+    const resultLabel = s1.result.type === "correct" ? "🎯 Direct hit" : s1.result.type === "partial" ? "🤝 Close — that's usually a supporting role" : "💭 Worth a second look";
+    wrap.appendChild(h("div", { class: "reveal-panel" },
+      h("span", { class: "rtag" }, resultLabel),
+      h("p", {}, h("b", {}, "✓ Primary Owner: " + owner.emoji + " " + owner.name)),
+      h("p", {}, h("b", {}, "✓ Why they own it: "), task.why),
+      h("p", {}, h("b", {}, "✓ Who may assist: "), assistList)
+    ));
+    wrap.appendChild(h("div", { class: "btn-row" },
+      h("button", { class: "btn btn-primary", onclick: function(){
+        if (s1.index + 1 < 3){
+          s1.index++;
+          s1.slots = [null];
+          s1.revealed = false;
+        } else {
+          state.screen = "stage2";
+        }
+        render();
+      }}, s1.index + 1 < 3 ? "Next Task →" : "Continue to Stage 2 →")
+    ));
+  }
+  return wrap;
+}
+
+/* ============================= STAGE 2 ============================= */
+function Stage2Screen(){
+  const s2 = state.stage2;
+  const scenario = s2.scenarios[s2.index];
+  const poolIds = scenario.order.concat(scenario.distract);
+  const slotLabels = scenario.order.map(function(_, i){ return "Step " + (i + 1); });
+
+  const wrap = h("div", { class: "stage stage-enter" },
+    h("p", { class: "eyebrow" }, "Stage 2 · Task Routing"),
+    h("h2", { class: "section-title" }, "Question " + (s2.index + 1) + " of 3"),
+    h("div", { class: "ticket" },
+      h("div", { class: "tnum" }, "🎫 " + scenario.ticket),
+      h("div", { class: "ttext" }, scenario.text)
+    ),
+    h("p", { class: "lede" }, "Drag or tap roles into the order you think this task should travel through the organization.")
+  );
+
+  if (!s2.revealed){
+    wrap.appendChild(buildSlotInterface(
+      poolIds, s2.slots, slotLabels,
+      function(newSlots){ s2.slots = newSlots; render(); },
+      { slotsHeading: "Workflow Order" }
+    ));
+    const ready = s2.slots.every(function(v){ return v !== null; });
+    wrap.appendChild(h("div", { class: "btn-row" },
+      h("button", { class: "btn btn-primary", disabled: ready ? null : true, onclick: function(){
+        let matches = 0;
+        scenario.order.forEach(function(roleId, i){ if (s2.slots[i] === roleId) matches++; });
+        const pts = Math.round((matches / scenario.order.length) * 10);
+        state.scores.workflow += pts;
+        state.scores.collaboration += 2;
+        s2.result = { matches: matches, total: scenario.order.length };
+        s2.revealed = true;
+        render();
+      }}, "Submit Workflow")
+    ));
+  } else {
+    wrap.appendChild(h("div", { class: "flow-track", id: "flowTrack" }, h("div", { class: "flow-dot", id: "flowDot" })));
+    wrap.appendChild(h("div", { class: "reveal-panel" },
+      h("span", { class: "rtag" }, s2.result.matches + " / " + s2.result.total + " steps matched the common flow"),
+      h("p", {}, h("b", {}, "✓ How this usually flows: "), scenario.order.map(function(id){ return roleById(id).emoji + " " + roleById(id).name; }).join(" → ")),
+      h("p", {}, h("b", {}, "✓ Why this order works: "), scenario.why)
+    ));
+    wrap.appendChild(h("div", { class: "btn-row" },
+      h("button", { class: "btn btn-primary", onclick: function(){
+        if (s2.index + 1 < 3){
+          s2.index++;
+          s2.slots = new Array(s2.scenarios[s2.index].order.length).fill(null);
+          s2.revealed = false;
+        } else {
+          state.screen = "stage3";
+        }
+        render();
+      }}, s2.index + 1 < 3 ? "Next Task →" : "Continue to Stage 3 →")
+    ));
+  }
+  return wrap;
+}
+
+/* ============================= STAGE 3 ============================= */
+function Stage3Screen(){
+  const s3 = state.stage3;
+  const scenario = s3.scenarios[s3.index];
+  const slotLabels = ["Primary Owner", "Supporting", "Supporting", "Supporting"];
+
+  const wrap = h("div", { class: "stage stage-enter" },
+    h("p", { class: "eyebrow" }, "Stage 3 · Collaboration Challenge"),
+    h("h2", { class: "section-title" }, "Situation " + (s3.index + 1) + " of 3"),
+    h("div", { class: "ticket" },
+      h("div", { class: "tnum" }, "🎫 " + scenario.ticket),
+      h("div", { class: "ttext" }, scenario.text)
+    ),
+    h("p", { class: "lede" }, "This one's bigger. Assign a Primary Owner and up to three Supporting roles — real problems like this are rarely solved by one person alone.")
+  );
+
+  if (!s3.revealed){
+    wrap.appendChild(buildSlotInterface(
+      ROLES.map(function(r){ return r.id; }),
+      s3.slots, slotLabels,
+      function(newSlots){ s3.slots = newSlots; render(); },
+      { primaryIndex: 0, slotsHeading: "Your Team Assignment" }
+    ));
+    const ready = s3.slots[0] !== null;
+    wrap.appendChild(h("div", { class: "btn-row" },
+      h("button", { class: "btn btn-primary", disabled: ready ? null : true, onclick: function(){
+        const primary = s3.slots[0];
+        const support = s3.slots.slice(1).filter(function(v){ return v !== null; });
+        if (primary === scenario.primary){
+          state.scores.collaboration += 6;
+          state.scores.ownership += 2;
+        } else if (scenario.support.indexOf(primary) !== -1){
+          state.scores.collaboration += 3;
+        }
+        const supportCorrect = support.filter(function(r){ return scenario.support.indexOf(r) !== -1; }).length;
+        state.scores.collaboration += supportCorrect * 2;
+        const extraWrong = support.filter(function(r){ return scenario.support.indexOf(r) === -1 && r !== scenario.primary; }).length;
+        if (extraWrong > 0) state.flags.overAssign++;
+        if (support.length === 0) state.flags.underCollab++;
+        const countDiff = Math.abs(support.length - scenario.support.length);
+        state.scores.delegation += countDiff <= 1 ? 8 : 3;
+        s3.result = { primary: primary, support: support };
+        s3.revealed = true;
+        render();
+      }}, "Submit Team")
+    ));
+  } else {
+    const idealPrimary = roleById(scenario.primary);
+    const idealSupport = scenario.support.map(function(id){ return roleById(id); });
+    const flowChips = scenario.flow.map(function(id, i){
+      return h("span", {},
+        h("span", { class: "chip" }, roleById(id).emoji + " " + roleById(id).name),
+        i < scenario.flow.length - 1 ? h("span", { class: "arrow" }, " → ") : null
+      );
+    });
+    wrap.appendChild(h("div", { class: "reveal-panel" },
+      h("span", { class: "rtag" }, "How this situation typically plays out"),
+      h("p", {}, h("b", {}, "✓ Primary Owner: " + idealPrimary.emoji + " " + idealPrimary.name)),
+      h("p", {}, h("b", {}, "✓ Supporting Teams:")),
+      h("div", { class: "chiprow" }, idealSupport.map(function(r){ return h("span", { class: "chip" }, r.emoji + " " + r.name); })),
+      h("p", {}, h("b", {}, "✓ Reasoning: "), scenario.why),
+      h("p", {}, h("b", {}, "✓ Possible Communication Flow:")),
+      h("div", { class: "comm-flow" }, flowChips)
+    ));
+    wrap.appendChild(h("div", { class: "btn-row" },
+      h("button", { class: "btn btn-primary", onclick: function(){
+        if (s3.index + 1 < 3){
+          s3.index++;
+          s3.slots = [null, null, null, null];
+          s3.revealed = false;
+        } else {
+          state.screen = "final";
+        }
+        render();
+      }}, s3.index + 1 < 3 ? "Next Situation →" : "See Final Reflection →")
+    ));
+  }
+  return wrap;
+}
+
+/* ============================= FINAL SCREEN ============================= */
+const MAX_SCORES = { ownership: 36, delegation: 33, collaboration: 42, workflow: 30 };
+const AXIS_LABELS = { ownership: "Ownership", delegation: "Delegation", collaboration: "Collaboration", workflow: "Workflow Thinking" };
+
+function buildRadar(axes){
+  const size = 260, center = size / 2, radius = 92;
+  const n = axes.length;
+  function pointFor(i, value){
+    const angle = (-90 + i * (360 / n)) * Math.PI / 180;
+    const r = radius * (value / 100);
+    return [center + r * Math.cos(angle), center + r * Math.sin(angle)];
+  }
+  const svgNS = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(svgNS, "svg");
+  svg.setAttribute("width", size); svg.setAttribute("height", size); svg.setAttribute("viewBox", "0 0 " + size + " " + size);
+  [0.25, 0.5, 0.75, 1].forEach(function(scale){
+    const pts = axes.map(function(_, i){ return pointFor(i, 100 * scale).join(","); }).join(" ");
+    const poly = document.createElementNS(svgNS, "polygon");
+    poly.setAttribute("points", pts); poly.setAttribute("fill", "none"); poly.setAttribute("stroke", "rgba(255,255,255,0.1)");
+    svg.appendChild(poly);
+  });
+  axes.forEach(function(ax, i){
+    const p = pointFor(i, 100);
+    const line = document.createElementNS(svgNS, "line");
+    line.setAttribute("x1", center); line.setAttribute("y1", center);
+    line.setAttribute("x2", p[0]); line.setAttribute("y2", p[1]);
+    line.setAttribute("stroke", "rgba(255,255,255,0.14)");
+    svg.appendChild(line);
+    const label = document.createElementNS(svgNS, "text");
+    const lp = pointFor(i, 122);
+    label.setAttribute("x", lp[0]); label.setAttribute("y", lp[1]);
+    label.setAttribute("fill", "#9198ab"); label.setAttribute("font-size", "11");
+    label.setAttribute("text-anchor", "middle"); label.setAttribute("font-family", "sans-serif");
+    label.textContent = ax.label;
+    svg.appendChild(label);
+  });
+  const dataPts = axes.map(function(ax, i){ return pointFor(i, ax.value).join(","); }).join(" ");
+  const dataPoly = document.createElementNS(svgNS, "polygon");
+  dataPoly.setAttribute("points", dataPts);
+  dataPoly.setAttribute("fill", "rgba(242,184,75,0.28)");
+  dataPoly.setAttribute("stroke", "#f2b84b"); dataPoly.setAttribute("stroke-width", "2");
+  svg.appendChild(dataPoly);
+  return svg;
+}
+
+function spawnConfetti(){
+  const wrap = h("div", { class: "confetti-wrap" });
+  document.body.appendChild(wrap);
+  const emojis = ["🎉", "✨", "🧭", "⭐", "🎊"];
+  for (let i = 0; i < 26; i++){
+    const el = h("span", { class: "confetti", style: {
+      left: Math.random() * 100 + "%",
+      animationDuration: (2.4 + Math.random() * 1.6) + "s",
+      animationDelay: (Math.random() * 0.6) + "s"
+    }}, emojis[Math.floor(Math.random() * emojis.length)]);
+    wrap.appendChild(el);
+  }
+  setTimeout(function(){ if (wrap.parentNode) wrap.parentNode.removeChild(wrap); }, 4200);
+}
+
+function FinalScreen(){
+  const pcts = {};
+  Object.keys(MAX_SCORES).forEach(function(key){
+    pcts[key] = clamp(Math.round((state.scores[key] / MAX_SCORES[key]) * 100), 0, 100);
+  });
+  const axes = Object.keys(AXIS_LABELS).map(function(key){ return { label: AXIS_LABELS[key], value: pcts[key], key: key }; });
+  const sorted = axes.slice().sort(function(a, b){ return b.value - a.value; });
+  const top = sorted[0];
+
+  const understoodWell = {
+    ownership: "You're quick to identify who should directly own a task — a core skill for keeping work from stalling in limbo.",
+    delegation: "You tend to bring in about the right amount of support — not too many hands, not too few.",
+    collaboration: "You consistently recognized when a problem needed more than one person or team.",
+    workflow: "You have a solid sense of how work actually moves between roles in sequence."
+  }[top.key];
+
+  const overAssignText = state.flags.overAssign > 0
+    ? "In " + state.flags.overAssign + " of the bigger situations, you brought in more supporting teams than the situation really called for — worth checking whether every added hand was necessary, or whether it quietly diffused ownership."
+    : "You rarely over-assigned responsibility — your supporting teams tended to match what each situation actually needed.";
+
+  const underCollabText = state.flags.underCollab > 0
+    ? "In " + state.flags.underCollab + " of the complex situations, you assigned a single owner with no supporting team — worth revisiting whether those situations were truly solvable alone."
+    : "You consistently looked beyond a single owner for the more complex situations — a good instinct for how real organizations solve big problems.";
+
+  const wrap = h("div", { class: "stage stage-enter" },
+    h("p", { class: "eyebrow" }, "Final Reflection"),
+    h("h1", { class: "headline" }, "How You Navigate Organizations"),
+    h("p", { class: "lede" }, "Instead of a score to chase, here's a reflection of the patterns that showed up in your decisions across all three stages."),
+    h("div", { style: { marginTop: "22px" } }, axes.map(function(ax){
+      return h("div", { class: "bar-row" },
+        h("span", { class: "bar-label" }, ax.label),
+        h("div", { class: "bar-track" }, h("div", { class: "bar-fill", "data-target": ax.value + "%" })),
+        h("span", { class: "bar-pct" }, ax.value + "%")
+      );
+    })),
+    h("h2", { class: "section-title", style: { marginTop: "26px", fontSize: "16px" } }, "Understanding Radar"),
+    buildRadar(axes),
+    h("div", { class: "insight-box" }, h("span", { class: "itag" }, "What you understood well"), h("p", {}, understoodWell)),
+    h("div", { class: "insight-box" }, h("span", { class: "itag" }, "Where you tended to over-assign responsibility"), h("p", {}, overAssignText)),
+    h("div", { class: "insight-box" }, h("span", { class: "itag" }, "Where you may have underestimated collaboration"), h("p", {}, underCollabText)),
+    h("div", { class: "insight-box" }, h("span", { class: "itag" }, "One insight about how organizations actually work"),
+      h("p", {}, "Many real workplace problems tend to be solved by teams rather than individuals — ownership tells you who's accountable, but the work usually still moves through several hands before it's truly done.")),
+    h("div", { class: "btn-row" },
+      h("button", { class: "btn btn-primary", onclick: function(){ initGame(); state.screen = "stage1"; render(); } }, "🔁 Try a New Set of Situations")
+    )
+  );
+  return wrap;
+}
+
+/* ============================= ROUTER ============================= */
+function render(){
+  const app = document.getElementById("app");
+  app.innerHTML = "";
+  app.appendChild(TopBar());
+  let screen;
+  if (state.screen === "intro") screen = IntroScreen();
+  else if (state.screen === "stage1") screen = Stage1Screen();
+  else if (state.screen === "stage2") screen = Stage2Screen();
+  else if (state.screen === "stage3") screen = Stage3Screen();
+  else screen = FinalScreen();
+  app.appendChild(screen);
+
+  if (state.screen === "stage2" && state.stage2.revealed){
+    requestAnimationFrame(function(){
+      const dot = document.getElementById("flowDot");
+      if (dot) requestAnimationFrame(function(){ dot.style.left = "100%"; });
+    });
+  }
+  if (state.screen === "final"){
+    requestAnimationFrame(function(){
+      document.querySelectorAll(".bar-fill").forEach(function(el){ el.style.width = el.getAttribute("data-target"); });
+    });
+    spawnConfetti();
+  }
+}
+
+render();
+</script>
+</body>
+</html>
