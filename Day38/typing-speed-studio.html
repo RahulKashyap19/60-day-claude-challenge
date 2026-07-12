@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Typing Speed Studio</title>
+<style>
+:root{
+  --bg:#0B0D12; --bg-panel:#12151C; --bg-panel-2:#171B24; --bg-key:#1B202B;
+  --border:#262B36; --border-lite:#333A48;
+  --text:#EDEFF3; --text-dim:#8B93A3; --text-faint:#565D6B;
+  --accent:#C9A26D; --accent-dim:rgba(201,162,109,.15);
+  --steel:#7FB8C4; --steel-dim:rgba(127,184,196,.15);
+  --error:#E0616B; --error-dim:rgba(224,97,107,.15);
+  --success:#6FCF97; --success-dim:rgba(111,207,151,.15);
+  --radius:12px;
+  --mono:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  --fs-type:26px;
+}
+html.theme-steel{ --accent:#7FB8C4; --accent-dim:rgba(127,184,196,.15); --steel:#C9A26D; --steel-dim:rgba(201,162,109,.15); }
+html.theme-rose{ --accent:#D98B92; --accent-dim:rgba(217,139,146,.15); --steel:#8FB3A9; --steel-dim:rgba(143,179,169,.15); }
+html.theme-sage{ --accent:#8FB37F; --accent-dim:rgba(143,179,127,.15); --steel:#A98FB3; --steel-dim:rgba(169,143,179,.15); }
+html.light{
+  --bg:#F3F1EC; --bg-panel:#FFFFFF; --bg-panel-2:#EDEAE2; --bg-key:#E4E0D6;
+  --border:#DAD5C8; --border-lite:#C7C1B1;
+  --text:#1B1912; --text-dim:#5B5748; --text-faint:#948E7B;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);transition:background .25s,color .25s;}
+h1,h2,h3{font-family:var(--sans);font-weight:700;letter-spacing:-.01em;margin:0;}
+.container{max-width:980px;margin:0 auto;padding:0 24px;}
+button{font-family:var(--sans);cursor:pointer;}
+::selection{background:var(--accent-dim);}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important;}}
+
+/* ===== Topbar ===== */
+#topbar{position:sticky;top:0;z-index:60;background:color-mix(in srgb, var(--bg) 85%, transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);}
+#topbar .row{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;max-width:980px;margin:0 auto;gap:14px;flex-wrap:wrap;}
+.brand{display:flex;align-items:center;gap:10px;font-size:17px;}
+.brand .k{width:10px;height:10px;background:var(--accent);border-radius:3px;box-shadow:0 0 12px var(--accent);}
+.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.chip-btn{background:var(--bg-panel);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 12px;font-size:12.5px;font-family:var(--mono);}
+.chip-btn:hover{border-color:var(--accent);}
+.chip-btn.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);}
+.streak-chip{font-family:var(--mono);font-size:12px;color:var(--accent);border:1px solid var(--border);padding:6px 10px;border-radius:20px;background:var(--bg-panel);}
+
+/* ===== Config panel ===== */
+#config{padding:26px 0 10px;}
+.mode-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.mode-tab{background:var(--bg-panel);border:1px solid var(--border);color:var(--text-dim);border-radius:9px;padding:9px 16px;font-size:13px;font-weight:600;}
+.mode-tab.active{background:var(--accent);border-color:var(--accent);color:var(--bg);}
+.sub-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px;}
+.sub-controls select, .sub-controls .opt-chip{font-family:var(--mono);font-size:12.5px;}
+.opt-chip{background:var(--bg-panel-2);border:1px solid var(--border);color:var(--text-dim);border-radius:7px;padding:6px 13px;}
+.opt-chip.active{border-color:var(--steel);color:var(--steel);background:var(--steel-dim);}
+select{background:var(--bg-panel-2);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:7px 12px;}
+.toggle-row{display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin:10px 0 4px;font-size:12.5px;color:var(--text-dim);}
+.toggle-row label{display:flex;align-items:center;gap:6px;cursor:pointer;}
+.toggle-row input[type=checkbox]{accent-color:var(--accent);}
+#customTextArea{width:100%;min-height:90px;background:var(--bg-panel-2);border:1px solid var(--border);border-radius:9px;color:var(--text);padding:12px;font-family:var(--sans);font-size:14px;margin-top:8px;display:none;}
+
+/* ===== Stats bar ===== */
+#statsBar{display:flex;gap:26px;flex-wrap:wrap;padding:18px 0;font-family:var(--mono);}
+.stat{display:flex;flex-direction:column;gap:2px;}
+.stat .v{font-size:26px;font-weight:700;color:var(--accent);line-height:1;}
+.stat .l{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-faint);}
+#liveProgress{height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:4px;}
+#liveProgressFill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--steel));transition:width .2s;}
+
+/* ===== Typing area ===== */
+#typingStage{position:relative;background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius);padding:34px 36px;margin:12px 0 20px;min-height:170px;outline:none;}
+#typingStage.focused{border-color:var(--accent);}
+#typingStage.paused #textDisplay{filter:blur(6px);opacity:.5;}
+#pauseOverlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;font-family:var(--mono);color:var(--text-dim);font-size:15px;letter-spacing:.05em;}
+#typingStage.paused #pauseOverlay{display:flex;}
+#textDisplay{font-family:var(--mono);font-size:var(--fs-type);line-height:1.8;letter-spacing:.01em;white-space:pre-wrap;word-break:break-word;color:var(--text-faint);user-select:none;}
+#textDisplay .ch{position:relative;transition:color .08s;}
+#textDisplay .ch.correct{color:var(--text);}
+#textDisplay .ch.incorrect{color:var(--error);background:var(--error-dim);border-radius:2px;}
+#textDisplay .ch.current{color:var(--text);}
+#textDisplay .ch.current::before{content:'';position:absolute;left:-1px;top:-2px;bottom:-2px;width:2px;background:var(--accent);animation:blink 1s step-end infinite;}
+#textDisplay .ch.missed{color:var(--text-faint);text-decoration:underline;text-decoration-color:var(--error);text-decoration-style:wavy;}
+#textDisplay .nl{display:block;height:0;}
+#textDisplay .nl-marker{opacity:.35;font-size:.8em;}
+@keyframes blink{0%,50%{opacity:1;}51%,100%{opacity:0;}}
+#hiddenInput{position:fixed;top:-999px;left:-999px;opacity:0;}
+.focus-mode #textDisplay .line-hidden{display:none;}
+#zenHint{text-align:center;color:var(--text-faint);font-family:var(--mono);font-size:12px;margin-top:10px;}
+
+/* ===== Control row under stage ===== */
+#controlRow{display:flex;justify-content:center;gap:10px;margin-bottom:34px;}
+.ctrl-btn{background:var(--bg-panel);border:1px solid var(--border);color:var(--text-dim);border-radius:9px;padding:9px 18px;font-size:13px;font-weight:600;}
+.ctrl-btn:hover{border-color:var(--accent);color:var(--text);}
+.ctrl-btn.primary{background:var(--accent);border-color:var(--accent);color:var(--bg);}
+
+/* ===== Results ===== */
+#results{display:none;padding:20px 0 60px;}
+#results.show{display:block;animation:fadein .4s ease;}
+@keyframes fadein{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.result-hero{display:flex;gap:40px;flex-wrap:wrap;align-items:flex-end;padding:26px 0;border-bottom:1px solid var(--border);margin-bottom:24px;}
+.result-hero .big{font-size:64px;font-weight:700;color:var(--accent);line-height:1;font-family:var(--mono);}
+.result-hero .big-lbl{font-size:12px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.08em;margin-top:6px;}
+.result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:24px;}
+.result-cell{background:var(--bg-panel);padding:16px 18px;}
+.result-cell .rv{font-family:var(--mono);font-size:22px;font-weight:700;}
+.result-cell .rl{font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.06em;margin-top:4px;}
+.dash-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:18px;}
+@media (max-width:760px){.dash-grid{grid-template-columns:1fr;}}
+.dash-card{background:var(--bg-panel);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin-bottom:18px;}
+.dash-card h3{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);font-family:var(--mono);margin-bottom:14px;}
+.badge-row{display:flex;gap:8px;flex-wrap:wrap;}
+.badge{display:flex;align-items:center;gap:6px;background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent);border-radius:20px;padding:6px 12px;font-size:12px;font-family:var(--mono);}
+.summary-block p{font-size:13.5px;color:var(--text-dim);line-height:1.7;margin:0 0 10px;}
+.summary-block strong{color:var(--text);}
+.keyboard-heat{display:flex;flex-direction:column;gap:5px;margin-top:8px;}
+.kb-row{display:flex;gap:5px;justify-content:center;}
+.kb-key{width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-family:var(--mono);background:var(--bg-key);border:1px solid var(--border);color:var(--text-dim);}
+.char-stat-row{display:flex;gap:14px;font-family:var(--mono);font-size:13px;margin-top:6px;}
+.char-stat-row span.n{font-weight:700;}
+.pb-star{color:var(--accent);}
+
+/* ===== History ===== */
+#history{padding:10px 0 70px;}
+.history-table{width:100%;border-collapse:collapse;font-size:13px;}
+.history-table th,.history-table td{padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;font-family:var(--mono);}
+.history-table th{color:var(--text-faint);text-transform:uppercase;font-size:10.5px;letter-spacing:.06em;}
+.history-empty{color:var(--text-faint);font-size:13.5px;padding:20px 0;}
+
+footer{padding:30px 0 60px;text-align:center;color:var(--text-faint);font-size:12px;font-family:var(--mono);}
+
+.section-title{display:flex;align-items:center;gap:10px;margin:36px 0 6px;}
+.section-title .n{font-family:var(--mono);color:var(--text-faint);font-size:12px;}
+
+.hint-text{color:var(--text-faint);font-size:12px;font-family:var(--mono);margin-top:6px;}
+
+@media (max-width:640px){
+  #typingStage{padding:22px 18px;}
+  :root{--fs-type:20px;}
+  .result-hero .big{font-size:44px;}
+}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="row">
+    <div class="brand"><span class="k"></span> Typing Speed Studio</div>
+    <div class="top-actions">
+      <span class="streak-chip">🔥 <span id="streakDisplay">0</span> day streak</span>
+      <button class="chip-btn" id="soundToggle">🔊 Sound: On</button>
+      <select id="themeSelect" class="chip-btn" style="font-family:var(--mono)">
+        <option value="dark-accent">Brass · Dark</option>
+        <option value="theme-steel">Steel · Dark</option>
+        <option value="theme-rose">Rose · Dark</option>
+        <option value="theme-sage">Sage · Dark</option>
+        <option value="light">Parchment · Light</option>
+      </select>
+      <button class="chip-btn" id="fontDown">A−</button>
+      <button class="chip-btn" id="fontUp">A+</button>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <div id="config">
+    <div class="mode-tabs" id="modeTabs"></div>
+
+    <div class="sub-controls" id="categoryControls"></div>
+    <div class="sub-controls" id="durationControls"></div>
+    <textarea id="customTextArea" placeholder="Paste or type your custom practice text here, then click Start..."></textarea>
+
+    <div class="toggle-row">
+      <label><input type="checkbox" id="focusModeToggle"> Focus mode (current line only)</label>
+      <label><input type="checkbox" id="capitalizeToggle" checked> Punctuation &amp; capitals</label>
+      <span class="hint-text">Shortcuts: Tab = restart · Esc = pause/resume · click text to focus</span>
+    </div>
+  </div>
+
+  <div id="statsBar">
+    <div class="stat"><span class="v" id="statWPM">0</span><span class="l">WPM</span></div>
+    <div class="stat"><span class="v" id="statAcc">100%</span><span class="l">Accuracy</span></div>
+    <div class="stat"><span class="v" id="statTime">0s</span><span class="l">Elapsed / Left</span></div>
+    <div class="stat"><span class="v" id="statMistakes">0</span><span class="l">Mistakes</span></div>
+    <div class="stat"><span class="v" id="statStreak">0</span><span class="l">Current streak</span></div>
+    <div class="stat" style="flex:1;min-width:140px"><span class="v" id="statCompletion">0%</span><span class="l">Completion</span>
+      <div id="liveProgress"><div id="liveProgressFill"></div></div>
+    </div>
+  </div>
+
+  <div id="typingStage" tabindex="0">
+    <div id="pauseOverlay">⏸ Paused — press Esc or click to resume</div>
+    <div id="textDisplay"></div>
+    <textarea id="hiddenInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+  </div>
+  <div id="zenHint" style="display:none">Zen mode — type freely, untimed. Press Esc to finish.</div>
+
+  <div id="controlRow">
+    <button class="ctrl-btn primary" id="startBtn">Start test</button>
+    <button class="ctrl-btn" id="restartBtn">↻ Restart (Tab)</button>
+    <button class="ctrl-btn" id="pauseBtn">⏸ Pause (Esc)</button>
+  </div>
+
+  <div id="results">
+    <div class="result-hero">
+      <div><div class="big" id="resWPM">0</div><div class="big-lbl">Words per minute</div></div>
+      <div><div class="big" id="resAcc" style="color:var(--steel)">0%</div><div class="big-lbl">Accuracy</div></div>
+      <div style="flex:1"></div>
+      <div class="badge-row" id="resPB"></div>
+    </div>
+
+    <div class="result-grid" id="resultGrid"></div>
+
+    <div class="dash-grid">
+      <div>
+        <div class="dash-card">
+          <h3>WPM over time</h3>
+          <svg id="wpmGraph" viewBox="0 0 600 160" style="width:100%;height:auto"></svg>
+        </div>
+        <div class="dash-card">
+          <h3>Accuracy over time</h3>
+          <svg id="accGraph" viewBox="0 0 600 100" style="width:100%;height:auto"></svg>
+        </div>
+        <div class="dash-card summary-block">
+          <h3>Performance summary</h3>
+          <div id="summaryText"></div>
+        </div>
+      </div>
+      <div>
+        <div class="dash-card">
+          <h3>Character breakdown</h3>
+          <div class="char-stat-row">
+            <span style="color:var(--success)">Correct <span class="n" id="cCorrect">0</span></span>
+            <span style="color:var(--error)">Incorrect <span class="n" id="cIncorrect">0</span></span>
+          </div>
+          <div class="char-stat-row">
+            <span style="color:var(--steel)">Extra <span class="n" id="cExtra">0</span></span>
+            <span style="color:var(--text-faint)">Missed <span class="n" id="cMissed">0</span></span>
+          </div>
+        </div>
+        <div class="dash-card">
+          <h3>Error heatmap — commonly mistyped keys</h3>
+          <div class="keyboard-heat" id="kbHeat"></div>
+        </div>
+        <div class="dash-card">
+          <h3>Achievements this session</h3>
+          <div class="badge-row" id="badgeRow"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="resultControlRow" class="control-row-static" style="display:flex;justify-content:center;gap:10px;margin-top:10px">
+      <button class="ctrl-btn primary" id="tryAgainBtn">Try again</button>
+      <button class="ctrl-btn" id="newTestBtn">New test setup</button>
+    </div>
+  </div>
+
+  <div class="section-title"><h2>Session history</h2><span class="n" id="historyCount"></span></div>
+  <div id="history"></div>
+</div>
+
+<footer>Typing Speed Studio · all data stored locally in your browser, nothing leaves your device.</footer>
+
+<script>
+/* ============================================================
+   CONTENT BANKS
+   ============================================================ */
+const SENTENCES = {
+  general: [
+    "The quiet library filled slowly as morning light spread across the wooden tables.",
+    "She checked the weather twice before deciding to carry an umbrella to work.",
+    "A good habit, once formed, quietly shapes the rest of your daily routine.",
+    "The train arrived a few minutes early, which surprised everyone on the platform.",
+    "He learned to cook by watching his grandmother prepare Sunday dinner every week.",
+    "Traffic slowed near the bridge as construction crews repaired a section of road.",
+    "The children built a small fort out of cushions and forgot about dinner entirely.",
+    "Somewhere between the second cup of coffee and the first meeting, the day began.",
+    "The old bookstore smelled of paper and dust, comforting in a way new stores rarely are.",
+    "A gentle breeze moved through the open window, carrying the scent of fresh rain.",
+    "Given the choice between two paths, most travelers pick the one already worn smooth.",
+    "The neighborhood cat visits every evening, expecting exactly the same bowl of food.",
+    "Nobody remembers who started the tradition, but the whole street keeps it going.",
+    "A single missed alarm turned an ordinary morning into an unexpectedly hurried one.",
+    "The recipe called for patience more than any single rare or difficult ingredient.",
+    "Even after years of practice, she still felt nervous before every public presentation.",
+    "The map was slightly outdated, but the general direction still proved reliable enough.",
+    "A short walk after lunch became the one habit he never skipped, rain or shine."
+  ],
+  academic: [
+    "The hypothesis was tested across three independent samples to reduce potential bias.",
+    "Researchers noted a significant correlation between the two variables under review.",
+    "The literature review revealed a persistent gap in longitudinal studies on the topic.",
+    "Peer reviewers requested additional clarification regarding the sampling methodology used.",
+    "The findings suggest that further replication is necessary before drawing firm conclusions.",
+    "A control group was included to isolate the effect of the primary independent variable.",
+    "The study's limitations include a relatively small sample size and a short duration.",
+    "Statistical significance does not necessarily imply practical or clinical significance.",
+    "The theoretical framework draws heavily on earlier work in cognitive development.",
+    "Data were collected through structured interviews and analyzed using thematic coding.",
+    "The abstract summarizes the research question, methodology, and key findings concisely.",
+    "Citations were cross-checked against the original sources to ensure accurate attribution.",
+    "The committee questioned whether the results could generalize beyond the studied population.",
+    "A follow-up experiment was proposed to address the confounding variables identified earlier.",
+    "The dissertation defense focused primarily on the validity of the chosen research design.",
+    "Ethical approval was obtained prior to recruiting any participants for the study."
+  ],
+  business: [
+    "Please find attached the quarterly report for your review ahead of tomorrow's meeting.",
+    "We appreciate your patience while our team resolves the outstanding invoice discrepancy.",
+    "The proposal outlines a phased rollout across three regions over the next six months.",
+    "Kindly confirm your availability for a call sometime this week at your convenience.",
+    "Our revenue grew steadily this quarter, driven mainly by renewed enterprise contracts.",
+    "The stakeholders have requested a revised timeline before the project moves forward.",
+    "Following our discussion, I have updated the deck with the latest financial projections.",
+    "The vendor agreement is currently under legal review and should close by Friday.",
+    "We recommend prioritizing the onboarding workflow before expanding to new markets.",
+    "Please let us know if the proposed budget aligns with your department's expectations.",
+    "The client expressed interest in extending the partnership for another fiscal year.",
+    "Our team will follow up with a detailed action plan within the next two business days.",
+    "The board approved the restructuring plan pending final sign-off from compliance.",
+    "A brief survey will be sent to all employees to gather feedback on the new policy.",
+    "The merger is expected to close in the third quarter, subject to regulatory approval.",
+    "We are pleased to share that customer satisfaction scores improved this quarter."
+  ],
+  medical: [
+    "The patient presented with mild fever, fatigue, and intermittent joint pain for three days.",
+    "Vital signs remained stable throughout the observation period following the procedure.",
+    "The physician recommended a follow-up appointment in two weeks to reassess symptoms.",
+    "Blood pressure readings were taken at regular intervals during the outpatient visit.",
+    "The prescribed dosage should be taken twice daily with food to reduce stomach upset.",
+    "A complete blood count was ordered to rule out any underlying infection.",
+    "The nurse documented the patient's allergies before administering the medication.",
+    "Symptoms improved significantly after the second week of the prescribed treatment.",
+    "The radiologist noted no abnormalities in the chest X-ray taken during the visit.",
+    "Patients are advised to avoid strenuous activity for at least forty-eight hours.",
+    "The discharge summary included instructions for wound care and medication schedules.",
+    "A referral to a specialist was made after the initial assessment raised concerns.",
+    "The clinical trial enrolled participants who met strict inclusion and exclusion criteria.",
+    "Routine screening helped detect the condition at an early and more treatable stage.",
+    "The care team reviewed the patient's history before adjusting the treatment plan.",
+    "Post-operative instructions emphasized rest, hydration, and gradual return to activity."
+  ],
+  legal: [
+    "This agreement shall remain in effect until terminated by either party in writing.",
+    "The undersigned parties agree to resolve disputes through binding arbitration.",
+    "Nothing in this clause shall be construed as a waiver of any prior rights.",
+    "The tenant shall provide thirty days' written notice prior to vacating the premises.",
+    "Each party represents that it has full authority to enter into this agreement.",
+    "Failure to comply with the terms herein may result in immediate termination.",
+    "This contract is governed by the laws of the jurisdiction in which it was signed.",
+    "The parties acknowledge that confidential information shall not be disclosed to third parties.",
+    "Any amendment to this agreement must be made in writing and signed by both parties.",
+    "The defendant was granted a continuance to allow additional time for discovery.",
+    "Liability under this section shall not exceed the total value of the contract.",
+    "The plaintiff filed a motion requesting summary judgment on all counts.",
+    "This clause survives termination of the agreement for a period of two years.",
+    "The witness was instructed to answer only the questions posed during testimony.",
+    "All notices under this agreement shall be delivered to the addresses listed below.",
+    "The court reserved judgment pending review of the additional submitted evidence."
+  ],
+  creative: [
+    "The lighthouse stood alone against a sky the color of a bruised peach.",
+    "Rain traced slow rivers down the window while the old clock refused to hurry.",
+    "She kept the letter folded so many times it had begun to soften at the edges.",
+    "The forest exhaled mist each morning, as if it too needed a moment to wake.",
+    "Somewhere beneath the floorboards, the house kept its own quiet, patient heartbeat.",
+    "He spoke in half-sentences, leaving the rest for the silence to finish.",
+    "The market smelled of cinnamon and rust, of things bought and things forgotten.",
+    "Her shadow arrived at the door a full second before she did.",
+    "The river did not care what season it was, only that it kept moving.",
+    "Every summer the town repainted its doors, as if color could outrun the years.",
+    "The violin case had traveled further than most of the people who owned it.",
+    "Dust motes hung in the afternoon light like slow, uncertain punctuation.",
+    "The garden had gone half-wild, and no one seemed in a hurry to tame it.",
+    "He folded the map twice and put it away, trusting the road instead.",
+    "The tide left behind small arguments of shell and glass along the sand.",
+    "A single candle made the whole kitchen feel like a held breath."
+  ]
+};
+
+const QUOTES = [
+  "Small daily habits, repeated long enough, quietly become the shape of a life.",
+  "Patience is not the absence of urgency, but the choice to act well despite it.",
+  "The clearest thinking often happens after the loudest doubts have gone quiet.",
+  "A skill practiced slowly and correctly outlasts one rushed and half-learned.",
+  "Progress hides inside repetition long before it ever shows up as a result.",
+  "Discipline is choosing between what you want now and what you want most.",
+  "The obstacle rarely disappears; it simply becomes familiar enough to work around.",
+  "Curiosity asks one more question after everyone else has already stopped.",
+  "A steady pace, kept honestly, beats a fast one that cannot be sustained.",
+  "Most breakthroughs are just ordinary effort that nobody noticed accumulating.",
+  "Good work is rarely loud about itself; it simply keeps showing up on time.",
+  "The first draft exists only to give the second draft something to fix.",
+  "Confidence grows less from talent and more from evidence you gather yourself.",
+  "What feels like a plateau is often the quiet middle of real improvement.",
+  "Every expert was once someone willing to be visibly bad at something new.",
+  "Focus is less about ignoring distraction and more about choosing one thing fully.",
+  "A well-kept routine is a promise you make to your future self, repeated daily.",
+  "The map is never the terrain, but it still makes the terrain easier to face."
+];
+
+const CODE = {
+  html: [
+`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Landing Page</title>
+</head>
+<body>
+  <header class="hero">
+    <h1>Welcome</h1>
+    <p>Build something great today.</p>
+  </header>
+</body>
+</html>`,
+`<nav class="navbar">
+  <ul>
+    <li><a href="/">Home</a></li>
+    <li><a href="/about">About</a></li>
+    <li><a href="/contact">Contact</a></li>
+  </ul>
+</nav>`,
+`<form action="/submit" method="POST">
+  <label for="email">Email</label>
+  <input type="email" id="email" name="email" required>
+  <button type="submit">Subscribe</button>
+</form>`,
+`<section class="card">
+  <img src="thumb.jpg" alt="Product thumbnail">
+  <h3>Product Name</h3>
+  <p class="price">$49.00</p>
+</section>`
+  ],
+  css: [
+`.button {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 18px;
+  border-radius: 8px;
+  background: var(--accent);
+  transition: transform 0.2s ease;
+}
+.button:hover {
+  transform: translateY(-2px);
+}`,
+`.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+@media (max-width: 600px) {
+  .grid { grid-template-columns: 1fr; }
+}`,
+`.card {
+  background: #12151c;
+  border: 1px solid #262b36;
+  border-radius: 12px;
+  padding: 20px 24px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}`,
+`@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.modal { animation: fadeIn 0.3s ease forwards; }`
+  ],
+  javascript: [
+`function debounce(fn, delay) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  };
+}`,
+`async function fetchUser(id) {
+  const res = await fetch(\`/api/users/\${id}\`);
+  if (!res.ok) throw new Error('Request failed');
+  return res.json();
+}`,
+`class Queue {
+  constructor() { this.items = []; }
+  enqueue(item) { this.items.push(item); }
+  dequeue() { return this.items.shift(); }
+  get isEmpty() { return this.items.length === 0; }
+}`,
+`const numbers = [4, 8, 15, 16, 23, 42];
+const doubled = numbers.map(n => n * 2).filter(n => n > 10);
+console.log(doubled);`
+  ],
+  python: [
+`def fibonacci(n):
+    a, b = 0, 1
+    for _ in range(n):
+        yield a
+        a, b = b, a + b
+
+for num in fibonacci(10):
+    print(num)`,
+`class Stack:
+    def __init__(self):
+        self.items = []
+
+    def push(self, item):
+        self.items.append(item)
+
+    def pop(self):
+        return self.items.pop() if self.items else None`,
+`import json
+
+with open('config.json') as f:
+    config = json.load(f)
+
+print(config.get('debug', False))`,
+`def is_prime(n):
+    if n < 2:
+        return False
+    for i in range(2, int(n ** 0.5) + 1):
+        if n % i == 0:
+            return False
+    return True`
+  ],
+  java: [
+`public class Calculator {
+    public int add(int a, int b) {
+        return a + b;
+    }
+
+    public int subtract(int a, int b) {
+        return a - b;
+    }
+}`,
+`import java.util.ArrayList;
+import java.util.List;
+
+List<String> names = new ArrayList<>();
+names.add("Alice");
+names.add("Bob");
+System.out.println(names.size());`,
+`public interface Shape {
+    double area();
+    double perimeter();
+}
+
+public class Circle implements Shape {
+    private double radius;
+    public double area() { return Math.PI * radius * radius; }
+    public double perimeter() { return 2 * Math.PI * radius; }
+}`,
+`try {
+    int result = 10 / 0;
+} catch (ArithmeticException e) {
+    System.out.println("Cannot divide by zero: " + e.getMessage());
+}`
+  ],
+  cpp: [
+`#include <iostream>
+#include <vector>
+
+int main() {
+    std::vector<int> nums = {1, 2, 3, 4, 5};
+    int sum = 0;
+    for (int n : nums) sum += n;
+    std::cout << "Sum: " << sum << std::endl;
+    return 0;
+}`,
+`class Node {
+public:
+    int data;
+    Node* next;
+    Node(int val) : data(val), next(nullptr) {}
+};`,
+`template <typename T>
+T maxValue(T a, T b) {
+    return (a > b) ? a : b;
+}`,
+`#include <string>
+
+std::string reverseString(std::string s) {
+    int left = 0, right = s.size() - 1;
+    while (left < right) {
+        std::swap(s[left++], s[right--]);
+    }
+    return s;
+}`
+  ],
+  sql: [
+`SELECT customer_id, SUM(amount) AS total_spent
+FROM orders
+WHERE order_date >= '2026-01-01'
+GROUP BY customer_id
+ORDER BY total_spent DESC
+LIMIT 10;`,
+`CREATE TABLE employees (
+    id INTEGER PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    department VARCHAR(50),
+    hire_date DATE
+);`,
+`UPDATE inventory
+SET quantity = quantity - 1
+WHERE product_id = 4821 AND quantity > 0;`,
+`SELECT o.id, c.name, o.total
+FROM orders o
+JOIN customers c ON o.customer_id = c.id
+WHERE o.status = 'pending';`
+  ]
+};
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const STORAGE_KEY = 'tss_v1';
+let store = {
+  history: [],
+  bests: {},
+  lastSessionDate: null,
+  streak: 0,
+  theme: 'dark-accent',
+  fontSize: 26,
+  soundOn: true
+};
+function loadStore(){
+  try{ const raw = localStorage.getItem(STORAGE_KEY); if(raw) store = Object.assign(store, JSON.parse(raw)); }catch(e){}
+}
+function saveStore(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(store)); }catch(e){} }
+
+let cfg = {
+  mode:'time',          // time | words | quote | custom | zen
+  duration:30,
+  wordCount:25,
+  category:'general',
+  language:'javascript',
+  focusMode:false,
+  punctuation:true
+};
+
+let test = {
+  targetChars:[],       // array of {ch, wordIdx}
+  typed:'',
+  running:false,
+  paused:false,
+  startTime:null,
+  elapsedPaused:0,
+  pauseStart:null,
+  timerId:null,
+  timeLimit:null,
+  mistakes:0,
+  correct:0,
+  incorrect:0,
+  extra:0,
+  missed:0,
+  wpmSamples:[],
+  accSamples:[],
+  keyErrors:{},
+  isCode:false,
+  finished:false
+};
+
+/* ============================================================
+   MODE / CATEGORY CONFIG UI
+   ============================================================ */
+const MODES = [
+  {id:'time', label:'Time'},
+  {id:'words', label:'Words'},
+  {id:'quote', label:'Quote'},
+  {id:'programming', label:'Programming'},
+  {id:'custom', label:'Custom text'},
+  {id:'adaptive', label:'Adaptive'},
+  {id:'zen', label:'Zen'}
+];
+const CATEGORIES = [
+  {id:'general', label:'General English'},
+  {id:'academic', label:'Academic'},
+  {id:'business', label:'Business'},
+  {id:'medical', label:'Medical'},
+  {id:'legal', label:'Legal'},
+  {id:'creative', label:'Creative Writing'}
+];
+const LANGS = [
+  {id:'html', label:'HTML'}, {id:'css', label:'CSS'}, {id:'javascript', label:'JavaScript'},
+  {id:'python', label:'Python'}, {id:'java', label:'Java'}, {id:'cpp', label:'C++'}, {id:'sql', label:'SQL'}
+];
+
+function renderModeTabs(){
+  const wrap = document.getElementById('modeTabs');
+  wrap.innerHTML = '';
+  MODES.forEach(m=>{
+    const b = document.createElement('button');
+    b.className = 'mode-tab' + (cfg.mode===m.id ? ' active':'');
+    b.textContent = m.label;
+    b.addEventListener('click', ()=>{ cfg.mode = m.id; onModeChange(); });
+    wrap.appendChild(b);
+  });
+}
+
+function onModeChange(){
+  renderModeTabs();
+  renderCategoryControls();
+  renderDurationControls();
+  const ta = document.getElementById('customTextArea');
+  ta.style.display = cfg.mode==='custom' ? 'block' : 'none';
+  document.getElementById('zenHint').style.display = cfg.mode==='zen' ? 'block' : 'none';
+  buildTest();
+}
+
+function renderCategoryControls(){
+  const wrap = document.getElementById('categoryControls');
+  wrap.innerHTML = '';
+  if(cfg.mode==='quote' || cfg.mode==='custom' || cfg.mode==='zen'){ return; }
+  if(cfg.mode==='programming'){
+    const sel = document.createElement('select');
+    LANGS.forEach(l=>{
+      const o = document.createElement('option'); o.value=l.id; o.textContent=l.label;
+      if(l.id===cfg.language) o.selected=true;
+      sel.appendChild(o);
+    });
+    sel.addEventListener('change', ()=>{ cfg.language = sel.value; buildTest(); });
+    wrap.appendChild(sel);
+    return;
+  }
+  // time / words / adaptive -> category picker (adaptive can auto-shuffle too)
+  const label = document.createElement('span');
+  label.className='hint-text'; label.style.marginTop='0'; label.textContent = 'Category:';
+  wrap.appendChild(label);
+  CATEGORIES.concat([{id:'programming', label:'Programming'}]).forEach(c=>{
+    const b = document.createElement('button');
+    b.className = 'opt-chip' + (cfg.category===c.id ? ' active':'');
+    b.textContent = c.label;
+    b.addEventListener('click', ()=>{ cfg.category = c.id; renderCategoryControls(); buildTest(); });
+    wrap.appendChild(b);
+  });
+  if(cfg.category==='programming'){
+    const sel = document.createElement('select');
+    LANGS.forEach(l=>{
+      const o = document.createElement('option'); o.value=l.id; o.textContent=l.label;
+      if(l.id===cfg.language) o.selected=true;
+      sel.appendChild(o);
+    });
+    sel.addEventListener('change', ()=>{ cfg.language = sel.value; buildTest(); });
+    wrap.appendChild(sel);
+  }
+}
+
+function renderDurationControls(){
+  const wrap = document.getElementById('durationControls');
+  wrap.innerHTML = '';
+  if(cfg.mode==='time' || cfg.mode==='adaptive'){
+    const label=document.createElement('span'); label.className='hint-text'; label.style.marginTop='0'; label.textContent='Duration:';
+    wrap.appendChild(label);
+    [15,30,60,120].forEach(s=>{
+      const b=document.createElement('button');
+      b.className='opt-chip'+(cfg.duration===s?' active':'');
+      b.textContent = s+'s';
+      b.addEventListener('click', ()=>{ cfg.duration=s; renderDurationControls(); buildTest(); });
+      wrap.appendChild(b);
+    });
+  } else if(cfg.mode==='words'){
+    const label=document.createElement('span'); label.className='hint-text'; label.style.marginTop='0'; label.textContent='Word count:';
+    wrap.appendChild(label);
+    [25,50,100,250].forEach(s=>{
+      const b=document.createElement('button');
+      b.className='opt-chip'+(cfg.wordCount===s?' active':'');
+      b.textContent = s;
+      b.addEventListener('click', ()=>{ cfg.wordCount=s; renderDurationControls(); buildTest(); });
+      wrap.appendChild(b);
+    });
+  }
+}
+
+/* ============================================================
+   TEXT GENERATION
+   ============================================================ */
+function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+function stripPunct(s){ return cfg.punctuation ? s : s.replace(/[.,;:!?']/g,'').toLowerCase(); }
+
+function generateProseTarget(category, approxWords){
+  const bank = shuffle(SENTENCES[category] || SENTENCES.general);
+  let words = [];
+  let i = 0;
+  while(words.length < approxWords){
+    const sentence = bank[i % bank.length];
+    words = words.concat(stripPunct(sentence).split(' '));
+    i++;
+    if(i > bank.length*4) break;
+  }
+  return words.slice(0, approxWords).join(' ');
+}
+
+function generateQuoteTarget(){
+  return stripPunct(QUOTES[Math.floor(Math.random()*QUOTES.length)]);
+}
+
+function generateCodeTarget(lang){
+  const bank = CODE[lang] || CODE.javascript;
+  return bank[Math.floor(Math.random()*bank.length)];
+}
+
+let adaptiveDifficultyLevel = 1; // 1..3
+
+function buildTargetText(){
+  test.isCode = false;
+  if(cfg.mode==='custom'){
+    const val = document.getElementById('customTextArea').value.trim();
+    return val.length ? val : 'Type your custom text in the box above, then press Start.';
+  }
+  if(cfg.mode==='quote'){
+    return generateQuoteTarget();
+  }
+  if(cfg.mode==='programming' || (cfg.mode!=='quote' && cfg.category==='programming')){
+    test.isCode = true;
+    return generateCodeTarget(cfg.language);
+  }
+  if(cfg.mode==='zen'){
+    return generateProseTarget(cfg.category==='programming' ? 'general' : cfg.category, 300);
+  }
+  if(cfg.mode==='words'){
+    return generateProseTarget(cfg.category, cfg.wordCount);
+  }
+  if(cfg.mode==='adaptive'){
+    const cats = CATEGORIES.map(c=>c.id);
+    const cat = cats[Math.floor(Math.random()*cats.length)];
+    cfg.category = cat;
+    const wordTarget = 40 + adaptiveDifficultyLevel*25;
+    return generateProseTarget(cat, wordTarget);
+  }
+  // time mode
+  return generateProseTarget(cfg.category, 220);
+}
+
+/* ============================================================
+   BUILD / RENDER TEST
+   ============================================================ */
+function buildTest(){
+  resetTestState();
+  const raw = buildTargetText();
+  test.targetRaw = raw;
+  renderTextDisplay();
+  updateStatsDisplay();
+  document.getElementById('results').classList.remove('show');
+}
+
+function resetTestState(){
+  clearInterval(test.timerId);
+  test = Object.assign(test, {
+    typed:'', running:false, paused:false, startTime:null, elapsedPaused:0, pauseStart:null,
+    timerId:null, mistakes:0, correct:0, incorrect:0, extra:0, missed:0,
+    wpmSamples:[], accSamples:[], keyErrors:{}, finished:false
+  });
+  document.getElementById('hiddenInput').value = '';
+  document.getElementById('typingStage').classList.remove('paused');
+}
+
+function renderTextDisplay(){
+  const el = document.getElementById('textDisplay');
+  el.innerHTML = '';
+  const text = test.targetRaw;
+  for(let i=0;i<text.length;i++){
+    const ch = text[i];
+    const span = document.createElement('span');
+    span.className = 'ch' + (i===0 ? ' current':'');
+    span.dataset.idx = i;
+    if(ch === '\n'){
+      span.classList.add('nl');
+      span.innerHTML = '<span class="nl-marker">↵</span><br>';
+    } else if(ch === ' '){
+      span.textContent = '\u00A0';
+    } else {
+      span.textContent = ch;
+    }
+    el.appendChild(span);
+  }
+}
+
+/* ============================================================
+   TYPING ENGINE
+   ============================================================ */
+const hiddenInput = document.getElementById('hiddenInput');
+const stage = document.getElementById('typingStage');
+
+stage.addEventListener('click', ()=>{ if(!test.finished){ hiddenInput.focus(); stage.classList.add('focused'); } });
+hiddenInput.addEventListener('blur', ()=> stage.classList.remove('focused'));
+hiddenInput.addEventListener('focus', ()=> stage.classList.add('focused'));
+
+hiddenInput.addEventListener('keydown', (e)=>{
+  if(test.finished) return;
+  if(e.key === 'Tab'){ e.preventDefault(); restartTest(); return; }
+  if(e.key === 'Escape'){
+    e.preventDefault();
+    if(cfg.mode==='zen'){ if(test.running) finishTest(); }
+    else { togglePause(); }
+    return;
+  }
+  if(test.isCode && e.key === 'Tab'){ e.preventDefault(); }
+});
+
+hiddenInput.addEventListener('input', ()=>{
+  if(test.paused) { hiddenInput.value = test.typed; return; }
+  if(!test.running) startTest();
+  handleInputChange(hiddenInput.value);
+});
+
+function startTest(){
+  test.running = true;
+  test.startTime = Date.now();
+  playSound('start');
+  if(cfg.mode==='time' || cfg.mode==='adaptive'){
+    test.timeLimit = cfg.duration;
+    test.timerId = setInterval(tick, 200);
+  } else if(cfg.mode!=='zen'){
+    test.timerId = setInterval(tick, 200);
+  } else {
+    test.timerId = setInterval(tick, 200);
+  }
+}
+
+function tick(){
+  if(test.paused) return;
+  const elapsed = getElapsedSeconds();
+  if((cfg.mode==='time' || cfg.mode==='adaptive') && elapsed >= test.timeLimit){
+    finishTest();
+    return;
+  }
+  sampleProgress();
+  updateStatsDisplay();
+}
+
+function getElapsedSeconds(){
+  if(!test.startTime) return 0;
+  return (Date.now() - test.startTime - test.elapsedPaused)/1000;
+}
+
+function sampleProgress(){
+  const mins = Math.max(getElapsedSeconds()/60, 1/600);
+  const wpm = Math.round((test.correct/5)/mins);
+  const acc = (test.correct+test.incorrect)>0 ? Math.round(test.correct/(test.correct+test.incorrect)*100) : 100;
+  test.wpmSamples.push(Math.max(0, Math.min(wpm, 300)));
+  test.accSamples.push(acc);
+}
+
+function handleInputChange(newVal){
+  const target = test.targetRaw;
+  const prevLen = test.typed.length;
+  // clamp so user cannot type past target length (except zen/custom where overflow allowed lightly)
+  const maxLen = target.length;
+  let val = newVal;
+  if(cfg.mode!=='zen' && val.length > maxLen + 15) val = val.slice(0, maxLen+15);
+  test.typed = val;
+
+  if(val.length > prevLen){
+    // new char typed
+    const idx = val.length - 1;
+    const typedCh = val[idx];
+    const targetCh = target[idx];
+    if(idx < target.length){
+      if(typedCh === targetCh){
+        test.correct++;
+      } else {
+        test.incorrect++;
+        test.mistakes++;
+        logKeyError(targetCh);
+      }
+    } else {
+      test.extra++;
+      test.mistakes++;
+    }
+  }
+  // note: backspace (val.length < prevLen) intentionally does not decrement mistakes (mistakes are historical)
+
+  renderProgress();
+  updateStatsDisplay();
+
+  if(cfg.mode!=='zen' && val.length >= target.length && target.length>0){
+    finishTest();
+  }
+}
+
+function logKeyError(ch){
+  const key = ch === ' ' ? 'SPACE' : ch === '\n' ? 'ENTER' : ch.toUpperCase();
+  test.keyErrors[key] = (test.keyErrors[key]||0)+1;
+}
+
+function renderProgress(){
+  const spans = document.getElementById('textDisplay').querySelectorAll('.ch');
+  const val = test.typed;
+  spans.forEach((span, i)=>{
+    span.classList.remove('correct','incorrect','current','missed');
+    if(i < val.length){
+      span.classList.add(val[i]===test.targetRaw[i] ? 'correct' : 'incorrect');
+    } else if(i === val.length){
+      span.classList.add('current');
+    }
+  });
+  if(cfg.focusMode){
+    // hide lines not containing current index — simplistic: show a window around cursor
+    applyFocusMode(val.length);
+  }
+}
+
+function applyFocusMode(cursorIdx){
+  const text = test.targetRaw;
+  const lines = text.split('\n');
+  let count=0, curLine=0;
+  for(let i=0;i<lines.length;i++){
+    count += lines[i].length+1;
+    if(cursorIdx < count){ curLine = i; break; }
+  }
+  const spans = document.getElementById('textDisplay').querySelectorAll('.ch');
+  let idx=0;
+  lines.forEach((line, li)=>{
+    for(let c=0;c<line.length+1;c++){
+      if(spans[idx]){
+        spans[idx].style.opacity = (li===curLine) ? '1' : '0';
+        spans[idx].style.display = (li===curLine || text[idx]==='\n') ? '' : (text[idx]==='\n' ? '' : 'none');
+      }
+      idx++;
+    }
+  });
+}
+
+function updateStatsDisplay(){
+  const elapsed = getElapsedSeconds();
+  const mins = Math.max(elapsed/60, 1/600);
+  const wpm = test.running ? Math.round((test.correct/5)/mins) : 0;
+  const acc = (test.correct+test.incorrect)>0 ? Math.round(test.correct/(test.correct+test.incorrect)*100) : 100;
+  document.getElementById('statWPM').textContent = test.running ? wpm : 0;
+  document.getElementById('statAcc').textContent = acc+'%';
+  let timeLabel;
+  if(cfg.mode==='time'||cfg.mode==='adaptive'){
+    const left = Math.max(0, Math.ceil((test.timeLimit||cfg.duration) - elapsed));
+    timeLabel = left+'s left';
+  } else {
+    timeLabel = Math.floor(elapsed)+'s';
+  }
+  document.getElementById('statTime').textContent = timeLabel;
+  document.getElementById('statMistakes').textContent = test.mistakes;
+  // current streak = consecutive correct chars from the end of typed
+  let streak=0;
+  for(let i=test.typed.length-1;i>=0;i--){
+    if(test.typed[i]===test.targetRaw[i]) streak++; else break;
+  }
+  document.getElementById('statStreak').textContent = streak;
+  const completion = test.targetRaw.length>0 ? Math.min(100, Math.round(test.typed.length/test.targetRaw.length*100)) : 0;
+  document.getElementById('statCompletion').textContent = (cfg.mode==='zen'? Math.floor(elapsed)+'s' : completion+'%');
+  document.getElementById('liveProgressFill').style.width = (cfg.mode==='zen' ? Math.min(100,elapsed/2) : completion)+'%';
+}
+
+/* ============================================================
+   FINISH / PAUSE / RESTART
+   ============================================================ */
+function togglePause(){
+  if(!test.running || test.finished) return;
+  test.paused = !test.paused;
+  stage.classList.toggle('paused', test.paused);
+  if(test.paused){ test.pauseStart = Date.now(); hiddenInput.blur(); }
+  else { test.elapsedPaused += Date.now()-test.pauseStart; hiddenInput.focus(); }
+}
+document.getElementById('pauseBtn').addEventListener('click', togglePause);
+
+function restartTest(){ buildTest(); hiddenInput.focus(); }
+document.getElementById('restartBtn').addEventListener('click', restartTest);
+document.getElementById('startBtn').addEventListener('click', ()=>{ hiddenInput.focus(); });
+
+function finishTest(){
+  if(test.finished) return;
+  test.finished = true;
+  test.running = false;
+  clearInterval(test.timerId);
+  // account for missed (untyped) chars
+  test.missed = Math.max(0, test.targetRaw.length - test.typed.length);
+  playSound('finish');
+  showResults();
+  updateHistory();
+
+  // adaptive difficulty shift
+  if(cfg.mode==='adaptive'){
+    const mins = Math.max(getElapsedSeconds()/60, 1/600);
+    const wpm = (test.correct/5)/mins;
+    const acc = (test.correct+test.incorrect)>0 ? test.correct/(test.correct+test.incorrect) : 1;
+    if(wpm>45 && acc>0.94 && adaptiveDifficultyLevel<3) adaptiveDifficultyLevel++;
+    else if((wpm<25 || acc<0.85) && adaptiveDifficultyLevel>1) adaptiveDifficultyLevel--;
+  }
+}
+
+/* ============================================================
+   RESULTS / ANALYTICS
+   ============================================================ */
+function computeConsistency(samples){
+  if(samples.length<2) return 100;
+  const mean = samples.reduce((a,b)=>a+b,0)/samples.length;
+  if(mean===0) return 100;
+  const variance = samples.reduce((a,b)=>a+Math.pow(b-mean,2),0)/samples.length;
+  const stdev = Math.sqrt(variance);
+  const cv = stdev/mean;
+  return Math.max(0, Math.round(100 - cv*100));
+}
+
+function estimatePercentile(wpm){
+  // approximate distribution: mean ~40wpm, based on commonly cited typing speed studies
+  const brackets = [[10,5],[20,15],[30,35],[40,55],[50,72],[60,85],[70,93],[80,97],[90,99],[100,99.5],[120,99.8]];
+  for(const [b,p] of brackets){ if(wpm<=b) return p; }
+  return 99.9;
+}
+
+function showResults(){
+  const mins = Math.max(getElapsedSeconds()/60, 1/600);
+  const wpm = Math.round((test.correct/5)/mins);
+  const rawWpm = Math.round(((test.correct+test.incorrect+test.extra)/5)/mins);
+  const acc = (test.correct+test.incorrect)>0 ? Math.round(test.correct/(test.correct+test.incorrect)*100) : 100;
+  const consistency = computeConsistency(test.wpmSamples);
+  const completion = test.targetRaw.length>0 ? Math.round(Math.min(test.typed.length,test.targetRaw.length)/test.targetRaw.length*100) : 100;
+  const duration = Math.round(getElapsedSeconds());
+  const percentile = estimatePercentile(wpm);
+
+  document.getElementById('resWPM').textContent = Math.max(0,wpm);
+  document.getElementById('resAcc').textContent = acc+'%';
+
+  const bestKey = cfg.mode+':'+(cfg.mode==='time'||cfg.mode==='adaptive'?cfg.duration:cfg.mode==='words'?cfg.wordCount:'std');
+  const prevBest = store.bests[bestKey];
+  const isPB = !prevBest || wpm > prevBest.wpm;
+  if(isPB) store.bests[bestKey] = {wpm, acc, date:Date.now()};
+
+  document.getElementById('resPB').innerHTML = isPB ? '<span class="badge pb-star">★ New personal best</span>' : (prevBest ? `<span class="badge">Best: ${prevBest.wpm} WPM</span>` : '');
+
+  const cells = [
+    ['Raw WPM', rawWpm], ['Consistency', consistency+'%'], ['Completion', completion+'%'],
+    ['Duration', duration+'s'], ['Percentile', '~'+percentile+'th'], ['Mistakes', test.mistakes]
+  ];
+  document.getElementById('resultGrid').innerHTML = cells.map(([l,v])=>`<div class="result-cell"><div class="rv">${v}</div><div class="rl">${l}</div></div>`).join('');
+
+  document.getElementById('cCorrect').textContent = test.correct;
+  document.getElementById('cIncorrect').textContent = test.incorrect;
+  document.getElementById('cExtra').textContent = test.extra;
+  document.getElementById('cMissed').textContent = test.missed;
+
+  drawGraph('wpmGraph', test.wpmSamples, '#C9A26D', 160);
+  drawGraph('accGraph', test.accSamples, '#7FB8C4', 100, 100);
+
+  renderKeyboardHeat();
+  renderBadges(wpm, acc, consistency, isPB);
+  renderSummary(wpm, acc, consistency, percentile);
+
+  document.getElementById('results').classList.add('show');
+  document.getElementById('results').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function drawGraph(id, samples, color, height, maxOverride){
+  const svg = document.getElementById(id);
+  const w = 600, h = height;
+  if(samples.length<2){ svg.innerHTML = `<text x="10" y="${h/2}" fill="#565D6B" font-size="12">not enough data</text>`; return; }
+  const max = maxOverride || Math.max(...samples, 10);
+  const pts = samples.map((s,i)=>{
+    const x = (i/(samples.length-1))*(w-20)+10;
+    const y = h-14 - (s/max)*(h-28);
+    return [x,y];
+  });
+  const path = 'M'+pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' L');
+  const area = path + ` L${pts[pts.length-1][0]},${h-6} L${pts[0][0]},${h-6} Z`;
+  svg.innerHTML = `
+    <path d="${area}" fill="${color}22"/>
+    <path d="${path}" stroke="${color}" stroke-width="2.5" fill="none"/>
+    <line x1="10" y1="${h-6}" x2="${w-10}" y2="${h-6}" stroke="#262B36"/>
+  `;
+}
+
+const KB_ROWS = [
+  ['1','2','3','4','5','6','7','8','9','0'],
+  ['Q','W','E','R','T','Y','U','I','O','P'],
+  ['A','S','D','F','G','H','J','K','L'],
+  ['Z','X','C','V','B','N','M']
+];
+function renderKeyboardHeat(){
+  const wrap = document.getElementById('kbHeat');
+  const maxErr = Math.max(1, ...Object.values(test.keyErrors));
+  wrap.innerHTML = KB_ROWS.map(row=>{
+    return '<div class="kb-row">'+row.map(k=>{
+      const err = test.keyErrors[k]||0;
+      const intensity = err/maxErr;
+      const bg = err>0 ? `rgba(224,97,107,${0.15+intensity*0.55})` : '';
+      return `<div class="kb-key" style="${bg?`background:${bg};border-color:#E0616B`:''}" title="${err} errors">${k}</div>`;
+    }).join('')+'</div>';
+  }).join('');
+  const topErrors = Object.entries(test.keyErrors).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  if(topErrors.length){
+    const p = document.createElement('div');
+    p.style.marginTop='10px'; p.style.fontSize='12px'; p.style.color='var(--text-dim)'; p.style.fontFamily='var(--mono)';
+    p.textContent = 'Most mistyped: ' + topErrors.map(([k,c])=>`${k} (${c})`).join(', ');
+    wrap.appendChild(p);
+  }
+}
+
+function renderBadges(wpm, acc, consistency, isPB){
+  const badges = [];
+  if(isPB) badges.push('🏆 Personal best');
+  if(acc===100) badges.push('🎯 Flawless accuracy');
+  if(wpm>=60) badges.push('⚡ Speed demon 60+ WPM');
+  if(wpm>=80) badges.push('🚀 80+ WPM');
+  if(consistency>=90) badges.push('📏 Rock steady');
+  if(test.mistakes===0) badges.push('✨ Zero mistakes');
+  const dayStreak = store.streak;
+  if(dayStreak>=3) badges.push(`🔥 ${dayStreak}-day streak`);
+  document.getElementById('badgeRow').innerHTML = badges.length ? badges.map(b=>`<span class="badge">${b}</span>`).join('') : '<span class="hint-text">Keep going — badges unlock as you improve.</span>';
+}
+
+function renderSummary(wpm, acc, consistency, percentile){
+  const topErrors = Object.entries(test.keyErrors).sort((a,b)=>b[1]-a[1]).slice(0,3).map(e=>e[0]);
+  let strength, weakness, suggestion;
+  if(acc>=97) strength = 'Your accuracy is excellent — very few characters were mistyped.';
+  else if(wpm>=55) strength = 'Your raw speed is strong, well above the typical average.';
+  else strength = 'You completed the passage with a steady, controlled pace.';
+
+  if(acc<90) weakness = 'Accuracy dipped below 90% — rushing is likely costing you more time than it saves, since mistakes require correction.';
+  else if(consistency<70) weakness = 'Your typing rhythm varied a lot during the session — short bursts followed by slowdowns.';
+  else weakness = 'No major weaknesses stood out this session — a solid, balanced attempt.';
+
+  if(topErrors.length){
+    suggestion = `Keys ${topErrors.join(', ')} caused the most trouble — try a few minutes of deliberate practice isolating those keys before your next session.`;
+  } else if(acc<95){
+    suggestion = 'Slow down slightly on the next attempt and prioritize accuracy — speed follows naturally once errors drop.';
+  } else {
+    suggestion = 'Try a longer duration or a harder category next to keep progressing.';
+  }
+
+  document.getElementById('summaryText').innerHTML = `
+    <p><strong>Strength:</strong> ${strength}</p>
+    <p><strong>Watch for:</strong> ${weakness}</p>
+    <p><strong>Suggestion:</strong> ${suggestion}</p>
+    <p><strong>Estimate:</strong> at ${wpm} WPM you're typing faster than roughly ${percentile}% of typists (rough estimate, not a precise benchmark).</p>
+  `;
+}
+
+/* ============================================================
+   HISTORY
+   ============================================================ */
+function updateHistory(){
+  const mins = Math.max(getElapsedSeconds()/60, 1/600);
+  const wpm = Math.round((test.correct/5)/mins);
+  const acc = (test.correct+test.incorrect)>0 ? Math.round(test.correct/(test.correct+test.incorrect)*100) : 100;
+  store.history.unshift({
+    date: Date.now(), mode: cfg.mode, category: cfg.mode==='programming'?cfg.language:cfg.category,
+    wpm, acc, duration: Math.round(getElapsedSeconds()), mistakes: test.mistakes
+  });
+  store.history = store.history.slice(0,50);
+
+  const today = new Date().toDateString();
+  const last = store.lastSessionDate ? new Date(store.lastSessionDate).toDateString() : null;
+  if(last !== today){
+    const yesterday = new Date(Date.now()-86400000).toDateString();
+    store.streak = (last===yesterday) ? store.streak+1 : 1;
+    store.lastSessionDate = Date.now();
+  }
+  saveStore();
+  renderHistory();
+  document.getElementById('streakDisplay').textContent = store.streak;
+}
+
+function renderHistory(){
+  const wrap = document.getElementById('history');
+  document.getElementById('historyCount').textContent = store.history.length ? store.history.length+' sessions' : '';
+  if(!store.history.length){ wrap.innerHTML = '<div class="history-empty">No sessions yet — complete a test to see your history here.</div>'; return; }
+  const rows = store.history.slice(0,15).map(h=>`
+    <tr>
+      <td>${new Date(h.date).toLocaleDateString()} ${new Date(h.date).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</td>
+      <td>${h.mode}</td><td>${h.category}</td>
+      <td style="color:var(--accent)">${h.wpm}</td>
+      <td style="color:var(--steel)">${h.acc}%</td>
+      <td>${h.duration}s</td><td>${h.mistakes}</td>
+    </tr>`).join('');
+  wrap.innerHTML = `<table class="history-table">
+    <tr><th>Date</th><th>Mode</th><th>Category</th><th>WPM</th><th>Accuracy</th><th>Duration</th><th>Mistakes</th></tr>
+    ${rows}
+  </table>`;
+}
+
+/* ============================================================
+   SOUND
+   ============================================================ */
+let audioCtx = null;
+function playSound(type){
+  if(!store.soundOn) return;
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.frequency.value = type==='start'?440: type==='finish'?660:220;
+    g.gain.value = 0.04;
+    o.start(); o.stop(audioCtx.currentTime+0.08);
+  }catch(e){}
+}
+
+/* ============================================================
+   TOP CONTROLS
+   ============================================================ */
+document.getElementById('soundToggle').addEventListener('click', ()=>{
+  store.soundOn = !store.soundOn; saveStore();
+  document.getElementById('soundToggle').textContent = '🔊 Sound: ' + (store.soundOn?'On':'Off');
+});
+document.getElementById('themeSelect').addEventListener('change', (e)=>{
+  document.documentElement.className = e.target.value==='dark-accent' ? '' : e.target.value;
+  store.theme = e.target.value; saveStore();
+});
+document.getElementById('fontUp').addEventListener('click', ()=>{ store.fontSize = Math.min(40, store.fontSize+2); applyFont(); });
+document.getElementById('fontDown').addEventListener('click', ()=>{ store.fontSize = Math.max(16, store.fontSize-2); applyFont(); });
+function applyFont(){ document.documentElement.style.setProperty('--fs-type', store.fontSize+'px'); saveStore(); }
+
+document.getElementById('focusModeToggle').addEventListener('change', (e)=>{ cfg.focusMode = e.target.checked; document.getElementById('textDisplay').parentElement.classList.toggle('focus-mode', cfg.focusMode); renderProgress(); });
+document.getElementById('capitalizeToggle').addEventListener('change', (e)=>{ cfg.punctuation = e.target.checked; buildTest(); });
+document.getElementById('customTextArea').addEventListener('input', ()=>{ if(cfg.mode==='custom') buildTest(); });
+
+document.getElementById('tryAgainBtn').addEventListener('click', ()=>{ document.getElementById('results').classList.remove('show'); buildTest(); hiddenInput.focus(); });
+document.getElementById('newTestBtn').addEventListener('click', ()=>{ document.getElementById('results').classList.remove('show'); document.getElementById('config').scrollIntoView({behavior:'smooth'}); });
+
+document.addEventListener('keydown', (e)=>{
+  if(document.activeElement === hiddenInput) return;
+  if(e.key === 'Tab'){ e.preventDefault(); restartTest(); }
+});
+
+/* ============================================================
+   INIT
+   ============================================================ */
+function init(){
+  loadStore();
+  document.getElementById('soundToggle').textContent = '🔊 Sound: ' + (store.soundOn?'On':'Off');
+  document.documentElement.className = store.theme==='dark-accent' ? '' : store.theme;
+  document.getElementById('themeSelect').value = store.theme;
+  document.documentElement.style.setProperty('--fs-type', (store.fontSize||26)+'px');
+  document.getElementById('streakDisplay').textContent = store.streak||0;
+  renderModeTabs();
+  renderCategoryControls();
+  renderDurationControls();
+  renderHistory();
+  buildTest();
+}
+init();
+</script>
+</body>
+</html>
