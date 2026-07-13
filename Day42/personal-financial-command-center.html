@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Personal Financial Command Center</title>
+<style>
+:root{
+  --bg:#0A0D13; --bg-panel:#12161F; --bg-panel-2:#171C27; --bg-input:#1B212C;
+  --border:#242B38; --border-lite:#323A4A;
+  --text:#EAEDF3; --text-dim:#8D96A8; --text-faint:#565F70;
+  --jade:#4FAE8C; --jade-dim:rgba(79,174,140,.15);
+  --gold:#D4A857; --gold-dim:rgba(212,168,87,.15);
+  --danger:#E0616B; --danger-dim:rgba(224,97,107,.15);
+  --info:#7FA8C4; --info-dim:rgba(127,168,196,.15);
+  --radius:12px;
+  --serif:Georgia,'Iowan Old Style','Times New Roman',serif;
+  --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  --mono:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;
+}
+html.light{
+  --bg:#F4F2EC; --bg-panel:#FFFFFF; --bg-panel-2:#EFEBE2; --bg-input:#FFFFFF;
+  --border:#DCD6C7; --border-lite:#C9C2AE;
+  --text:#1A1811; --text-dim:#5C5747; --text-faint:#948C76;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6;transition:background .25s,color .25s;}
+h1,h2,h3,h4{font-family:var(--serif);font-weight:600;letter-spacing:-.01em;margin:0 0 .4em;}
+p{margin:0 0 1em;}
+.container{max-width:1180px;margin:0 auto;padding:0 24px;}
+a{color:var(--jade);}
+button, select, input{font-family:var(--sans);}
+.mono{font-family:var(--mono);}
+::selection{background:var(--jade-dim);}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important;}}
+
+/* ===== Topbar ===== */
+#topbar{position:sticky;top:0;z-index:70;background:color-mix(in srgb, var(--bg) 85%, transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);}
+#topbar .row{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;max-width:1180px;margin:0 auto;gap:14px;flex-wrap:wrap;}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--serif);font-size:18px;}
+.brand .k{width:10px;height:10px;background:var(--gold);border-radius:2px;transform:rotate(45deg);}
+.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.chip-btn{background:var(--bg-panel);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 12px;font-size:12.5px;font-family:var(--mono);cursor:pointer;}
+.chip-btn:hover{border-color:var(--jade);}
+
+#modnav{position:sticky;top:53px;z-index:60;background:var(--bg);border-bottom:1px solid var(--border);padding:9px 0;}
+#modnav .row{display:flex;gap:7px;overflow-x:auto;max-width:1180px;margin:0 auto;padding:0 24px;}
+.modpill{flex:0 0 auto;font-family:var(--mono);font-size:11px;padding:6px 12px;border-radius:20px;border:1px solid var(--border);color:var(--text-faint);cursor:pointer;white-space:nowrap;background:var(--bg-panel);}
+.modpill.active{color:var(--jade);border-color:var(--jade);background:var(--jade-dim);}
+
+/* ===== Hero / Overview ===== */
+#hero{padding:44px 0 10px;}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-faint);}
+#hero h1{font-size:clamp(28px,4.4vw,42px);margin-top:8px;}
+#hero .sub{color:var(--text-dim);font-size:15.5px;max-width:70ch;}
+
+.overview-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:18px;margin:26px 0;}
+@media (max-width:820px){.overview-grid{grid-template-columns:1fr;}}
+.card{background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius);padding:22px 24px;}
+.card h3{font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-dim);font-family:var(--mono);margin-bottom:14px;}
+
+.score-wrap{display:flex;align-items:center;gap:24px;flex-wrap:wrap;}
+.score-num{font-family:var(--serif);font-size:64px;color:var(--jade);line-height:1;}
+.score-lbl{font-size:12px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.06em;margin-top:6px;}
+.score-bars{flex:1;min-width:200px;display:flex;flex-direction:column;gap:8px;}
+.score-bar-row{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text-dim);}
+.score-bar-row .lbl{width:120px;flex-shrink:0;font-family:var(--mono);}
+.score-bar-track{flex:1;height:6px;background:var(--bg-panel-2);border-radius:3px;overflow:hidden;}
+.score-bar-fill{height:100%;border-radius:3px;}
+.score-bar-val{width:36px;text-align:right;font-family:var(--mono);}
+
+.metric-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.metric-cell{background:var(--bg-panel);padding:16px 18px;}
+.metric-cell .mv{font-family:var(--mono);font-size:20px;font-weight:700;}
+.metric-cell .ml{font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;margin-top:4px;}
+.metric-cell.pos .mv{color:var(--jade);}
+.metric-cell.neg .mv{color:var(--danger);}
+.metric-cell.gold .mv{color:var(--gold);}
+
+.recommendations{margin-top:8px;}
+.rec-item{display:flex;gap:10px;padding:11px 0;border-top:1px solid var(--border);font-size:13.5px;color:var(--text-dim);}
+.rec-item:first-child{border-top:none;}
+.rec-item .tag{flex-shrink:0;font-family:var(--mono);font-size:10px;text-transform:uppercase;padding:3px 8px;border-radius:10px;height:fit-content;}
+.tag.warn{background:var(--danger-dim);color:var(--danger);}
+.tag.good{background:var(--jade-dim);color:var(--jade);}
+.tag.info{background:var(--info-dim);color:var(--info);}
+
+/* ===== Modules ===== */
+section.module{padding:50px 0;border-top:1px solid var(--border);}
+.module-head{display:flex;align-items:baseline;gap:14px;margin-bottom:16px;flex-wrap:wrap;}
+.module-head h2{font-size:26px;}
+.module-tag{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;padding:3px 10px;border-radius:20px;border:1px solid var(--border);color:var(--text-faint);}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+@media (max-width:820px){.two-col{grid-template-columns:1fr;}}
+
+/* editable tables */
+table.edit-table{width:100%;border-collapse:collapse;font-size:13.5px;margin:14px 0;}
+table.edit-table th{text-align:left;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-faint);padding:8px 10px;border-bottom:1px solid var(--border);}
+table.edit-table td{padding:6px 8px;border-bottom:1px solid var(--border);}
+table.edit-table input, table.edit-table select{width:100%;background:var(--bg-input);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 9px;font-size:13px;font-family:var(--sans);}
+table.edit-table input[type=number]{font-family:var(--mono);text-align:right;}
+.row-del{background:none;border:none;color:var(--text-faint);cursor:pointer;font-size:16px;padding:4px 8px;}
+.row-del:hover{color:var(--danger);}
+.add-row-btn{background:var(--jade-dim);border:1px solid var(--jade);color:var(--jade);border-radius:8px;padding:8px 16px;font-size:12.5px;font-weight:600;cursor:pointer;margin-top:6px;}
+.table-total{font-family:var(--mono);font-size:13px;color:var(--text-dim);margin-top:6px;text-align:right;}
+.table-total b{color:var(--text);}
+
+/* charts */
+.chart-card{background:var(--bg-panel);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin:16px 0;}
+.chart-card h4{font-family:var(--mono);font-size:12px;text-transform:uppercase;color:var(--text-dim);letter-spacing:.05em;margin-bottom:10px;}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--text-dim);}
+.legend .li{display:flex;align-items:center;gap:6px;}
+.legend .sw{width:10px;height:10px;border-radius:3px;}
+
+.insight-box{border-left:3px solid var(--gold);background:var(--gold-dim);padding:14px 18px;border-radius:0 10px 10px 0;margin:16px 0;font-size:13.5px;color:var(--text-dim);}
+.insight-box strong{color:var(--gold);}
+
+/* simulators */
+.sim-card{background:var(--bg-panel);border:1px solid var(--border);border-radius:12px;padding:22px 24px;margin:16px 0;}
+.sim-inputs{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:16px;}
+.sim-field label{display:block;font-size:11px;color:var(--text-faint);font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;}
+.sim-field input{width:100%;background:var(--bg-input);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:9px 11px;font-family:var(--mono);font-size:14px;}
+.sim-result{display:flex;gap:26px;flex-wrap:wrap;padding-top:14px;border-top:1px solid var(--border);}
+.sim-result .sv{font-family:var(--serif);font-size:28px;color:var(--jade);}
+.sim-result .sl{font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;margin-top:3px;}
+
+/* checklist */
+.checklist{list-style:none;padding:0;margin:0;}
+.checklist li{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font-size:13.5px;color:var(--text-dim);}
+.checklist input{margin-top:3px;accent-color:var(--jade);}
+.checklist li.checked{color:var(--text-faint);text-decoration:line-through;}
+
+.resource-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:10px;}
+.resource-card{border:1px solid var(--border);border-radius:12px;padding:18px 20px;background:var(--bg-panel);}
+.resource-card h4{font-family:var(--mono);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--gold);margin-bottom:10px;}
+.resource-card ul{margin:0;padding-left:18px;font-size:13.5px;color:var(--text-dim);}
+.resource-card li{margin-bottom:6px;}
+
+.btn{display:inline-block;padding:10px 20px;border-radius:8px;border:1px solid var(--jade);color:var(--bg);background:var(--jade);font-weight:600;cursor:pointer;font-size:13.5px;}
+.btn.secondary{background:transparent;color:var(--jade);}
+.btn.gold{background:var(--gold);border-color:var(--gold);}
+.control-row{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0;}
+
+footer{padding:34px 0 70px;text-align:center;color:var(--text-faint);font-size:12px;font-family:var(--mono);}
+
+@media print{
+  #topbar,#modnav,.btn,.no-print,.add-row-btn,.row-del,.control-row{display:none!important;}
+  body{background:#fff;color:#111;}
+  .card,.chart-card,.sim-card,.resource-card{border:1px solid #ccc;background:#fff;break-inside:avoid;}
+  section.module{border-top:1px solid #ccc;padding:24px 0;}
+}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="row">
+    <div class="brand"><span class="k"></span> Personal Financial Command Center</div>
+    <div class="top-actions">
+      <button class="chip-btn" id="sampleBtn">Load sample data</button>
+      <button class="chip-btn" id="clearBtn">Clear all data</button>
+      <button class="chip-btn" id="printBtn">🖨 Print report</button>
+      <button class="chip-btn" id="themeToggle">☀ Light</button>
+    </div>
+  </div>
+</div>
+<div id="modnav"><div class="row" id="modnavRow"></div></div>
+
+<div class="container">
+
+  <header id="hero">
+    <div class="eyebrow">Wealth &amp; Cash Flow Dashboard · Senior Professional Profile</div>
+    <h1>Your complete financial picture, in one place</h1>
+    <p class="sub">Built for a married household with dependents, focused on aggressive long-term wealth growth. Every number below is yours to edit — everything is saved locally in this browser, nothing is uploaded anywhere.</p>
+
+    <div class="overview-grid">
+      <div class="card">
+        <h3>Financial Health Score</h3>
+        <div class="score-wrap">
+          <div>
+            <div class="score-num" id="healthScoreNum">—</div>
+            <div class="score-lbl" id="healthScoreLbl">Calculating...</div>
+          </div>
+          <div class="score-bars" id="healthScoreBars"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>This month at a glance</h3>
+        <div class="metric-grid" id="overviewMetrics"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Recommendations for you</h3>
+      <div class="recommendations" id="recommendationsList"></div>
+    </div>
+  </header>
+
+  <section class="module" id="mod-income"><div id="cIncome"></div></section>
+  <section class="module" id="mod-budget"><div id="cBudget"></div></section>
+  <section class="module" id="mod-savings"><div id="cSavings"></div></section>
+  <section class="module" id="mod-debt"><div id="cDebt"></div></section>
+  <section class="module" id="mod-invest"><div id="cInvest"></div></section>
+  <section class="module" id="mod-goals"><div id="cGoals"></div></section>
+  <section class="module" id="mod-insurance"><div id="cInsurance"></div></section>
+  <section class="module" id="mod-subs"><div id="cSubs"></div></section>
+  <section class="module" id="mod-sim"><div id="cSim"></div></section>
+  <section class="module" id="mod-report"><div id="cReport"></div></section>
+  <section class="module" id="mod-tips"><div id="cTips"></div></section>
+
+</div>
+
+<footer>Personal Financial Command Center · all figures stored only in this browser · not financial advice, for planning purposes only.</footer>
+
+<script>
+/* ============================================================
+   STORAGE & STATE
+   ============================================================ */
+const STORAGE_KEY = 'pfcc_v1';
+const fmt = new Intl.NumberFormat('en-IN', {style:'currency', currency:'INR', maximumFractionDigits:0});
+const fmtNum = new Intl.NumberFormat('en-IN', {maximumFractionDigits:0});
+
+function emptyState(){
+  return {
+    theme:'dark',
+    income:[],
+    expenses:[],
+    savingsAccounts:[],
+    emergencyTargetMonths:6,
+    debts:[],
+    investments:[],
+    goals:[],
+    insurance:[],
+    subscriptions:[],
+    checklist:{}
+  };
+}
+let S = emptyState();
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) S = Object.assign(emptyState(), JSON.parse(raw));
+    else loadSample();
+  }catch(e){ loadSample(); }
+}
+function saveState(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(S)); }catch(e){} renderAll(); }
+function saveStateQuiet(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(S)); }catch(e){} }
+
+function uid(){ return Math.random().toString(36).slice(2,9); }
+
+function loadSample(){
+  S = emptyState();
+  S.income = [
+    {id:uid(), source:'Primary Salary (net)', amount:210000, type:'Salary'},
+    {id:uid(), source:'Spouse Income', amount:65000, type:'Salary'},
+    {id:uid(), source:'Rental / Other', amount:15000, type:'Other'}
+  ];
+  S.expenses = [
+    {id:uid(), category:'Housing / Rent / Maintenance', amount:45000},
+    {id:uid(), category:'Groceries & Household', amount:22000},
+    {id:uid(), category:'Children / Education', amount:28000},
+    {id:uid(), category:'Utilities & Bills', amount:9000},
+    {id:uid(), category:'Transport & Fuel', amount:12000},
+    {id:uid(), category:'Healthcare', amount:6000},
+    {id:uid(), category:'Dining & Lifestyle', amount:15000},
+    {id:uid(), category:'Family Support', amount:10000}
+  ];
+  S.savingsAccounts = [
+    {id:uid(), name:'Joint Savings Account', balance:320000},
+    {id:uid(), name:'Liquid Fund (emergency)', balance:180000}
+  ];
+  S.emergencyTargetMonths = 6;
+  S.debts = [
+    {id:uid(), name:'Home Loan', outstanding:4200000, emi:42000, rate:8.6, tenureMonths:156},
+    {id:uid(), name:'Car Loan', outstanding:380000, emi:11000, rate:9.2, tenureMonths:30}
+  ];
+  S.investments = [
+    {id:uid(), name:'Equity Mutual Funds (SIP)', type:'Mutual Funds', invested:950000, currentValue:1320000, monthlySIP:35000},
+    {id:uid(), name:'Direct Equity', type:'Equity/Stocks', invested:400000, currentValue:520000, monthlySIP:0},
+    {id:uid(), name:'EPF', type:'PPF/EPF', invested:0, currentValue:1850000, monthlySIP:21000},
+    {id:uid(), name:'PPF', type:'PPF/EPF', invested:0, currentValue:620000, monthlySIP:12500},
+    {id:uid(), name:'NPS', type:'NPS', invested:0, currentValue:340000, monthlySIP:5000},
+    {id:uid(), name:'Fixed Deposits', type:'Fixed Deposit', invested:500000, currentValue:540000, monthlySIP:0},
+    {id:uid(), name:'Gold (SGB/Jewellery)', type:'Gold', invested:220000, currentValue:290000, monthlySIP:0}
+  ];
+  S.goals = [
+    {id:uid(), name:'Child Higher Education', targetAmount:4000000, currentSaved:650000, targetYear:2035, category:'Education'},
+    {id:uid(), name:'Retirement Corpus', targetAmount:60000000, currentSaved:4400000, targetYear:2046, category:'Retirement'},
+    {id:uid(), name:'Home Renovation', targetAmount:1200000, currentSaved:250000, targetYear:2028, category:'Home'}
+  ];
+  S.insurance = [
+    {id:uid(), type:'Term Life', coverAmount:15000000, annualPremium:22000},
+    {id:uid(), type:'Health (Family Floater)', coverAmount:1500000, annualPremium:32000},
+    {id:uid(), type:'Vehicle', coverAmount:600000, annualPremium:14000}
+  ];
+  S.subscriptions = [
+    {id:uid(), name:'OTT bundle (Netflix/Prime/Hotstar)', amount:1200, cycle:'Monthly'},
+    {id:uid(), name:'Cloud storage / SaaS tools', amount:1500, cycle:'Monthly'},
+    {id:uid(), name:'Gym membership', amount:2000, cycle:'Monthly'},
+    {id:uid(), name:'News / magazine', amount:3600, cycle:'Yearly'}
+  ];
+  saveStateQuiet();
+}
+
+/* ============================================================
+   GENERIC EDITABLE TABLE
+   ============================================================ */
+function renderEditableTable(containerEl, arr, columns, opts){
+  opts = opts || {};
+  const wrap = document.createElement('div');
+  const table = document.createElement('table');
+  table.className = 'edit-table';
+  const thead = document.createElement('tr');
+  columns.forEach(c=>{ const th=document.createElement('th'); th.textContent=c.label; thead.appendChild(th); });
+  thead.appendChild(document.createElement('th'));
+  table.appendChild(thead);
+
+  arr.forEach(row=>{
+    const tr = document.createElement('tr');
+    columns.forEach(c=>{
+      const td = document.createElement('td');
+      let input;
+      if(c.type==='select'){
+        input = document.createElement('select');
+        c.options.forEach(o=>{ const opt=document.createElement('option'); opt.value=o; opt.textContent=o; if(row[c.key]===o) opt.selected=true; input.appendChild(opt); });
+      } else {
+        input = document.createElement('input');
+        input.type = c.type||'text';
+        if(c.type==='number') input.step = c.step||'1';
+        input.value = row[c.key] ?? (c.type==='number'?0:'');
+      }
+      input.addEventListener('input', ()=>{
+        row[c.key] = c.type==='number' ? (parseFloat(input.value)||0) : input.value;
+        saveStateQuiet();
+        if(opts.onChange) opts.onChange();
+        renderOverview();
+      });
+      td.appendChild(input);
+      tr.appendChild(td);
+    });
+    const delTd = document.createElement('td');
+    const delBtn = document.createElement('button');
+    delBtn.className='row-del'; delBtn.textContent='✕';
+    delBtn.addEventListener('click', ()=>{
+      const idx = arr.indexOf(row);
+      if(idx>-1) arr.splice(idx,1);
+      saveState();
+      if(opts.onChange) opts.onChange();
+    });
+    delTd.appendChild(delBtn);
+    tr.appendChild(delTd);
+    table.appendChild(tr);
+  });
+  wrap.appendChild(table);
+
+  const addBtn = document.createElement('button');
+  addBtn.className='add-row-btn'; addBtn.textContent='+ Add row';
+  addBtn.addEventListener('click', ()=>{
+    const newRow = {id:uid()};
+    columns.forEach(c=>{ newRow[c.key] = c.type==='number'?0: (c.type==='select'?c.options[0]:''); });
+    arr.push(newRow);
+    saveState();
+    if(opts.onChange) opts.onChange();
+  });
+  wrap.appendChild(addBtn);
+
+  if(opts.totalLabel){
+    const totalDiv = document.createElement('div');
+    totalDiv.className = 'table-total';
+    const total = arr.reduce((s,r)=>s + (parseFloat(r[opts.totalKey])||0) * (opts.totalMultiplier ? opts.totalMultiplier(r) : 1), 0);
+    totalDiv.innerHTML = `${opts.totalLabel}: <b>${fmt.format(total)}</b>`;
+    wrap.appendChild(totalDiv);
+  }
+
+  containerEl.innerHTML='';
+  containerEl.appendChild(wrap);
+}
+
+/* ============================================================
+   DERIVED CALCULATIONS
+   ============================================================ */
+function totalMonthlyIncome(){ return S.income.reduce((s,r)=>s+(+r.amount||0),0); }
+function totalMonthlyExpenses(){ return S.expenses.reduce((s,r)=>s+(+r.amount||0),0); }
+function totalEMI(){ return S.debts.reduce((s,r)=>s+(+r.emi||0),0); }
+function totalMonthlySubs(){ return S.subscriptions.reduce((s,r)=> s + (r.cycle==='Yearly' ? (+r.amount||0)/12 : (+r.amount||0)),0); }
+function totalMonthlyOutflow(){ return totalMonthlyExpenses() + totalEMI() + totalMonthlySubs(); }
+function netMonthlyCashFlow(){ return totalMonthlyIncome() - totalMonthlyOutflow(); }
+function totalSavingsBalance(){ return S.savingsAccounts.reduce((s,r)=>s+(+r.balance||0),0); }
+function totalDebtOutstanding(){ return S.debts.reduce((s,r)=>s+(+r.outstanding||0),0); }
+function totalInvestmentValue(){ return S.investments.reduce((s,r)=>s+(+r.currentValue||0),0); }
+function totalInvestmentSIP(){ return S.investments.reduce((s,r)=>s+(+r.monthlySIP||0),0); }
+function netWorth(){ return totalInvestmentValue() + totalSavingsBalance() - totalDebtOutstanding(); }
+function savingsRate(){ const inc = totalMonthlyIncome(); return inc>0 ? netMonthlyCashFlow()/inc : 0; }
+function emergencyMonthsCovered(){ const exp = totalMonthlyOutflow(); return exp>0 ? totalSavingsBalance()/exp : 0; }
+function debtToIncomeRatio(){ const inc = totalMonthlyIncome(); return inc>0 ? totalEMI()/inc : 0; }
+function totalLifeCover(){ return S.insurance.filter(r=>r.type.toLowerCase().includes('life')).reduce((s,r)=>s+(+r.coverAmount||0),0); }
+function totalHealthCover(){ return S.insurance.filter(r=>r.type.toLowerCase().includes('health')).reduce((s,r)=>s+(+r.coverAmount||0),0); }
+function annualIncome(){ return totalMonthlyIncome()*12; }
+
+/* ============================================================
+   HEALTH SCORE
+   ============================================================ */
+function computeHealthScore(){
+  const sr = savingsRate();
+  const srScore = Math.max(0, Math.min(100, (sr/0.3)*100));
+
+  const efMonths = emergencyMonthsCovered();
+  const efScore = Math.max(0, Math.min(100, (efMonths/S.emergencyTargetMonths)*100));
+
+  const dti = debtToIncomeRatio();
+  const dtiScore = Math.max(0, Math.min(100, 100 - (dti/0.4)*100));
+
+  const recommendedLifeCover = annualIncome()*10;
+  const lifeCover = totalLifeCover();
+  const insScore = recommendedLifeCover>0 ? Math.max(0, Math.min(100, (lifeCover/recommendedLifeCover)*100)) : (S.insurance.length?60:0);
+
+  const distinctTypes = new Set(S.investments.map(r=>r.type)).size;
+  const divScore = Math.max(0, Math.min(100, (distinctTypes/5)*100));
+
+  const overall = Math.round(srScore*0.30 + efScore*0.20 + dtiScore*0.20 + insScore*0.15 + divScore*0.15);
+
+  return {
+    overall,
+    parts:[
+      {label:'Savings Rate', score:Math.round(srScore), color:'var(--jade)'},
+      {label:'Emergency Fund', score:Math.round(efScore), color:'var(--info)'},
+      {label:'Debt-to-Income', score:Math.round(dtiScore), color:'var(--gold)'},
+      {label:'Insurance Cover', score:Math.round(insScore), color:'var(--danger)'},
+      {label:'Diversification', score:Math.round(divScore), color:'#A98FB3'}
+    ]
+  };
+}
+
+function scoreLabel(n){
+  if(n>=85) return 'Excellent — you\'re in strong financial shape';
+  if(n>=70) return 'Good — a few areas to strengthen';
+  if(n>=50) return 'Fair — some important gaps to address';
+  return 'Needs attention — prioritize the recommendations below';
+}
+
+/* ============================================================
+   OVERVIEW RENDER
+   ============================================================ */
+function renderOverview(){
+  const hs = computeHealthScore();
+  document.getElementById('healthScoreNum').textContent = hs.overall;
+  document.getElementById('healthScoreLbl').textContent = scoreLabel(hs.overall);
+  document.getElementById('healthScoreNum').style.color = hs.overall>=70 ? 'var(--jade)' : hs.overall>=50 ? 'var(--gold)' : 'var(--danger)';
+
+  document.getElementById('healthScoreBars').innerHTML = hs.parts.map(p=>`
+    <div class="score-bar-row">
+      <span class="lbl">${p.label}</span>
+      <div class="score-bar-track"><div class="score-bar-fill" style="width:${p.score}%;background:${p.color}"></div></div>
+      <span class="score-bar-val">${p.score}</span>
+    </div>`).join('');
+
+  const income = totalMonthlyIncome(), outflow = totalMonthlyOutflow(), cash = netMonthlyCashFlow();
+  const nw = netWorth();
+  const metrics = [
+    ['Monthly Income', fmt.format(income), 'pos'],
+    ['Monthly Outflow', fmt.format(outflow), ''],
+    ['Net Cash Flow', fmt.format(cash), cash>=0?'pos':'neg'],
+    ['Net Worth', fmt.format(nw), 'gold'],
+    ['Savings Rate', Math.round(savingsRate()*100)+'%', savingsRate()>=0.2?'pos':'neg'],
+    ['Emergency Fund', emergencyMonthsCovered().toFixed(1)+' months', emergencyMonthsCovered()>=S.emergencyTargetMonths?'pos':'neg']
+  ];
+  document.getElementById('overviewMetrics').innerHTML = metrics.map(([l,v,cls])=>`
+    <div class="metric-cell ${cls}"><div class="mv">${v}</div><div class="ml">${l}</div></div>`).join('');
+
+  renderRecommendations(hs);
+}
+
+function renderRecommendations(hs){
+  const recs = [];
+  const sr = savingsRate();
+  const ef = emergencyMonthsCovered();
+  const dti = debtToIncomeRatio();
+  const lifeCover = totalLifeCover();
+  const recLifeCover = annualIncome()*10;
+
+  if(sr < 0.2) recs.push({tag:'warn', text:`Your savings rate is ${Math.round(sr*100)}% — aim for at least 20-30% of income. Review discretionary spending in the Budget module.`});
+  else recs.push({tag:'good', text:`Solid savings rate of ${Math.round(sr*100)}% — keep automating this into investments before it gets spent.`});
+
+  if(ef < S.emergencyTargetMonths) recs.push({tag:'warn', text:`Emergency fund covers ${ef.toFixed(1)} months of expenses, below your ${S.emergencyTargetMonths}-month target. Consider directing surplus cash flow here first.`});
+  else recs.push({tag:'good', text:`Emergency fund target met (${ef.toFixed(1)} months covered) — you can safely direct more surplus toward long-term investments.`});
+
+  if(dti > 0.4) recs.push({tag:'warn', text:`EMI outflow is ${Math.round(dti*100)}% of income — above the commonly recommended 40% ceiling. Consider the loan prepayment simulator below.`});
+  else if(dti>0) recs.push({tag:'info', text:`EMI outflow is a manageable ${Math.round(dti*100)}% of income.`});
+
+  if(lifeCover < recLifeCover) recs.push({tag:'warn', text:`Term life cover (${fmt.format(lifeCover)}) is below the ~10x annual income benchmark (${fmt.format(recLifeCover)}) for a household with dependents — a gap worth closing given your family's reliance on this income.`});
+  else recs.push({tag:'good', text:`Term life cover looks adequate relative to your income and family dependents.`});
+
+  const distinctTypes = new Set(S.investments.map(r=>r.type)).size;
+  if(distinctTypes < 4) recs.push({tag:'info', text:`Your portfolio spans ${distinctTypes} asset type(s) — broadening across equity, debt, and retirement-focused instruments can reduce concentration risk.`});
+
+  document.getElementById('recommendationsList').innerHTML = recs.map(r=>`
+    <div class="rec-item"><span class="tag ${r.tag}">${r.tag}</span><span>${r.text}</span></div>`).join('');
+}
+
+/* ============================================================
+   SVG CHART HELPERS
+   ============================================================ */
+function svgDonut(data, size){
+  size = size||180;
+  const cx=size/2, cy=size/2, r=size/2-14, r2=r-22;
+  const total = data.reduce((s,d)=>s+d.value,0) || 1;
+  let angle = -90;
+  let paths = '';
+  data.forEach(d=>{
+    const frac = d.value/total;
+    const sweep = frac*360;
+    const large = sweep>180?1:0;
+    const x1 = cx + r*Math.cos(angle*Math.PI/180), y1 = cy + r*Math.sin(angle*Math.PI/180);
+    const endAngle = angle+sweep;
+    const x2 = cx + r*Math.cos(endAngle*Math.PI/180), y2 = cy + r*Math.sin(endAngle*Math.PI/180);
+    paths += `<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large} 1 ${x2},${y2} Z" fill="${d.color}" opacity="0.9"/>`;
+    angle = endAngle;
+  });
+  return `<svg viewBox="0 0 ${size} ${size}" style="width:100%;max-width:${size}px;height:auto">
+    ${paths}
+    <circle cx="${cx}" cy="${cy}" r="${r2}" fill="var(--bg-panel)"/>
+  </svg>`;
+}
+
+function svgBarChart(data, w, h){
+  w=w||600; h=h||220;
+  const max = Math.max(...data.map(d=>d.value), 1);
+  const barW = (w-40)/data.length*0.6;
+  const gap = (w-40)/data.length;
+  let bars='';
+  data.forEach((d,i)=>{
+    const bh = (d.value/max)*(h-50);
+    const x = 20 + i*gap + (gap-barW)/2;
+    const y = h-34-bh;
+    bars += `<rect x="${x}" y="${y}" width="${barW}" height="${bh}" rx="4" fill="${d.color||'var(--jade)'}"/>`;
+    bars += `<text x="${x+barW/2}" y="${h-16}" font-size="10" fill="#8D96A8" text-anchor="middle" font-family="monospace">${d.label}</text>`;
+  });
+  return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto"><line x1="16" y1="${h-34}" x2="${w-16}" y2="${h-34}" stroke="#242B38"/>${bars}</svg>`;
+}
+
+function svgLineProjection(series, w, h, color){
+  w=w||600; h=h||200; color=color||'#4FAE8C';
+  const max = Math.max(...series.map(s=>s.value), 1);
+  const pts = series.map((s,i)=>{
+    const x = 20 + (i/(series.length-1))*(w-40);
+    const y = h-30 - (s.value/max)*(h-50);
+    return [x,y];
+  });
+  const path = 'M'+pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' L');
+  const area = path + ` L${pts[pts.length-1][0]},${h-14} L${pts[0][0]},${h-14} Z`;
+  const labels = series.map((s,i)=> i%Math.ceil(series.length/6)===0 ? `<text x="${pts[i][0]}" y="${h-2}" font-size="9" fill="#8D96A8" text-anchor="middle" font-family="monospace">${s.label}</text>` : '').join('');
+  return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto">
+    <path d="${area}" fill="${color}22"/>
+    <path d="${path}" stroke="${color}" stroke-width="2.5" fill="none"/>
+    <line x1="16" y1="${h-30}" x2="${w-16}" y2="${h-30}" stroke="#242B38"/>
+    ${labels}
+  </svg>`;
+}
+
+const PALETTE = ['#4FAE8C','#D4A857','#7FA8C4','#E0616B','#A98FB3','#C99B6D','#6DBFC9'];
+
+/* ============================================================
+   MODULE: INCOME & CASH FLOW
+   ============================================================ */
+function renderIncomeModule(){
+  const el = document.getElementById('cIncome');
+  el.innerHTML = `
+    <div class="module-head"><h2>Income &amp; Cash Flow</h2><span class="module-tag">module 1</span></div>
+    <p>List every regular income source for the household. This feeds your savings rate and every downstream calculation on this dashboard.</p>
+    <div id="incomeTable"></div>
+    <div class="chart-card">
+      <h4>Monthly cash flow breakdown</h4>
+      <div id="cashFlowChart"></div>
+    </div>
+  `;
+  renderEditableTable(document.getElementById('incomeTable'), S.income,
+    [{key:'source',label:'Source'},{key:'amount',label:'Monthly Amount (₹)',type:'number'},
+     {key:'type',label:'Type',type:'select',options:['Salary','Freelance/Bonus','Rental','Business','Other']}],
+    {onChange:renderCashFlowChart, totalLabel:'Total monthly income', totalKey:'amount'}
+  );
+  renderCashFlowChart();
+}
+function renderCashFlowChart(){
+  const inc = totalMonthlyIncome(), exp = totalMonthlyExpenses(), emi = totalEMI(), subs = totalMonthlySubs();
+  const surplus = Math.max(0, inc-exp-emi-subs);
+  document.getElementById('cashFlowChart').innerHTML = svgBarChart([
+    {label:'Income', value:inc, color:'#4FAE8C'},
+    {label:'Expenses', value:exp, color:'#E0616B'},
+    {label:'EMIs', value:emi, color:'#D4A857'},
+    {label:'Subscriptions', value:subs, color:'#7FA8C4'},
+    {label:'Surplus', value:surplus, color:'#A98FB3'}
+  ]);
+}
+
+/* ============================================================
+   MODULE: BUDGET & EXPENSES
+   ============================================================ */
+function renderBudgetModule(){
+  const el = document.getElementById('cBudget');
+  el.innerHTML = `
+    <div class="module-head"><h2>Budget &amp; Expense Tracking</h2><span class="module-tag">module 2</span></div>
+    <p>Track where the household's money actually goes each month, by category.</p>
+    <div id="expenseTable"></div>
+    <div class="chart-card">
+      <h4>Spending by category</h4>
+      <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:center">
+        <div id="expenseDonut"></div>
+        <div class="legend" id="expenseLegend"></div>
+      </div>
+    </div>
+  `;
+  renderEditableTable(document.getElementById('expenseTable'), S.expenses,
+    [{key:'category',label:'Category'},{key:'amount',label:'Monthly Amount (₹)',type:'number'}],
+    {onChange:renderExpenseDonut, totalLabel:'Total monthly expenses', totalKey:'amount'}
+  );
+  renderExpenseDonut();
+}
+function renderExpenseDonut(){
+  const data = S.expenses.map((r,i)=>({label:r.category, value:+r.amount||0, color:PALETTE[i%PALETTE.length]}));
+  document.getElementById('expenseDonut').innerHTML = svgDonut(data, 180);
+  document.getElementById('expenseLegend').innerHTML = data.map(d=>`
+    <span class="li"><span class="sw" style="background:${d.color}"></span>${d.label} (${fmt.format(d.value)})</span>`).join('');
+}
+
+/* ============================================================
+   MODULE: SAVINGS & EMERGENCY FUND
+   ============================================================ */
+function renderSavingsModule(){
+  const el = document.getElementById('cSavings');
+  el.innerHTML = `
+    <div class="module-head"><h2>Savings &amp; Emergency Fund</h2><span class="module-tag">module 3</span></div>
+    <p>Your liquid safety net — separate from long-term investments — for job loss, medical emergencies, or unplanned costs.</p>
+    <div id="savingsTable"></div>
+    <div class="sim-inputs" style="max-width:260px;margin-top:10px">
+      <div class="sim-field"><label>Target coverage (months)</label><input type="number" id="efTargetInput" value="${S.emergencyTargetMonths}"></div>
+    </div>
+    <div class="insight-box" id="efInsight"></div>
+  `;
+  renderEditableTable(document.getElementById('savingsTable'), S.savingsAccounts,
+    [{key:'name',label:'Account / Fund'},{key:'balance',label:'Balance (₹)',type:'number'}],
+    {onChange:renderEfInsight, totalLabel:'Total liquid savings', totalKey:'balance'}
+  );
+  document.getElementById('efTargetInput').addEventListener('input', (e)=>{
+    S.emergencyTargetMonths = parseFloat(e.target.value)||6; saveStateQuiet(); renderEfInsight(); renderOverview();
+  });
+  renderEfInsight();
+}
+function renderEfInsight(){
+  const months = emergencyMonthsCovered();
+  const target = S.emergencyTargetMonths;
+  const gap = Math.max(0, (target*totalMonthlyOutflow()) - totalSavingsBalance());
+  document.getElementById('efInsight').innerHTML = months>=target
+    ? `<strong>On track.</strong> Your emergency fund covers ${months.toFixed(1)} months of expenses, meeting your ${target}-month target.`
+    : `<strong>Gap identified.</strong> You have ${months.toFixed(1)} months covered against a ${target}-month target — about ${fmt.format(gap)} short. At your current surplus, prioritize this before increasing discretionary investments.`;
+}
+
+/* ============================================================
+   MODULE: DEBT / EMI TRACKER
+   ============================================================ */
+function renderDebtModule(){
+  const el = document.getElementById('cDebt');
+  el.innerHTML = `
+    <div class="module-head"><h2>Debt &amp; EMI Tracker</h2><span class="module-tag">module 4</span></div>
+    <p>All active loans — outstanding balance, EMI, and interest rate — so you can see the full debt picture and prioritize payoff.</p>
+    <div id="debtTable"></div>
+    <div class="chart-card">
+      <h4>Outstanding debt by loan</h4>
+      <div id="debtChart"></div>
+    </div>
+    <div class="insight-box" id="debtInsight"></div>
+  `;
+  renderEditableTable(document.getElementById('debtTable'), S.debts,
+    [{key:'name',label:'Loan'},{key:'outstanding',label:'Outstanding (₹)',type:'number'},
+     {key:'emi',label:'Monthly EMI (₹)',type:'number'},{key:'rate',label:'Interest Rate (%)',type:'number',step:'0.1'},
+     {key:'tenureMonths',label:'Months Left',type:'number'}],
+    {onChange:renderDebtExtras, totalLabel:'Total outstanding debt', totalKey:'outstanding'}
+  );
+  renderDebtExtras();
+}
+function renderDebtExtras(){
+  const data = S.debts.map((r,i)=>({label:r.name, value:+r.outstanding||0, color:PALETTE[i%PALETTE.length]}));
+  document.getElementById('debtChart').innerHTML = svgBarChart(data);
+  const dti = debtToIncomeRatio();
+  const highestRate = S.debts.reduce((m,r)=> (+r.rate||0)>m.rate ? {name:r.name, rate:+r.rate} : m, {name:'-', rate:0});
+  document.getElementById('debtInsight').innerHTML = `Your EMI-to-income ratio is <strong>${Math.round(dti*100)}%</strong>. ${dti>0.4?'This is above the commonly recommended 40% ceiling — consider prepaying the highest-rate loan first.':'This is within a healthy range.'} Highest interest rate: <strong>${highestRate.name}</strong> at ${highestRate.rate}% — prepaying this loan typically saves the most interest per rupee.`;
+}
+
+/* ============================================================
+   MODULE: INVESTMENTS & PORTFOLIO
+   ============================================================ */
+function renderInvestModule(){
+  const el = document.getElementById('cInvest');
+  el.innerHTML = `
+    <div class="module-head"><h2>Investments &amp; Portfolio</h2><span class="module-tag">module 5</span></div>
+    <p>Equity, mutual funds, retirement instruments (EPF/PPF/NPS), fixed income, and gold — your full wealth-building portfolio.</p>
+    <div id="investTable"></div>
+    <div class="two-col">
+      <div class="chart-card">
+        <h4>Allocation by asset type</h4>
+        <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:center">
+          <div id="investDonut"></div>
+          <div class="legend" id="investLegend"></div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h4>Invested vs current value</h4>
+        <div id="investBarChart"></div>
+      </div>
+    </div>
+    <div class="insight-box" id="investInsight"></div>
+  `;
+  renderEditableTable(document.getElementById('investTable'), S.investments,
+    [{key:'name',label:'Investment'},
+     {key:'type',label:'Type',type:'select',options:['Equity/Stocks','Mutual Funds','PPF/EPF','Fixed Deposit','Real Estate','Gold','NPS','Other']},
+     {key:'invested',label:'Total Invested (₹)',type:'number'},{key:'currentValue',label:'Current Value (₹)',type:'number'},
+     {key:'monthlySIP',label:'Monthly SIP (₹)',type:'number'}],
+    {onChange:renderInvestExtras, totalLabel:'Total current portfolio value', totalKey:'currentValue'}
+  );
+  renderInvestExtras();
+}
+function renderInvestExtras(){
+  const byType = {};
+  S.investments.forEach(r=>{ byType[r.type] = (byType[r.type]||0) + (+r.currentValue||0); });
+  const data = Object.entries(byType).map(([label,value],i)=>({label,value,color:PALETTE[i%PALETTE.length]}));
+  document.getElementById('investDonut').innerHTML = svgDonut(data,180);
+  document.getElementById('investLegend').innerHTML = data.map(d=>`<span class="li"><span class="sw" style="background:${d.color}"></span>${d.label} (${fmt.format(d.value)})</span>`).join('');
+
+  const invested = S.investments.reduce((s,r)=>s+(+r.invested||0),0);
+  const current = totalInvestmentValue();
+  document.getElementById('investBarChart').innerHTML = svgBarChart([
+    {label:'Invested', value:invested, color:'#7FA8C4'},
+    {label:'Current', value:current, color:'#4FAE8C'}
+  ]);
+  const gain = current-invested;
+  const gainPct = invested>0 ? (gain/invested*100).toFixed(1) : '0';
+  document.getElementById('investInsight').innerHTML = `Total unrealized gain: <strong>${fmt.format(gain)}</strong> (${gainPct}%). Monthly SIP commitment: <strong>${fmt.format(totalInvestmentSIP())}</strong>. Given your stated aggressive-growth focus, consider whether equity/mutual fund allocation is high enough relative to fixed-income holdings.`;
+}
+
+/* ============================================================
+   MODULE: GOALS PLANNER
+   ============================================================ */
+function renderGoalsModule(){
+  const el = document.getElementById('cGoals');
+  el.innerHTML = `
+    <div class="module-head"><h2>Goals Planner</h2><span class="module-tag">module 6</span></div>
+    <p>Major life goals — home, children's education, marriage, retirement — tracked against how much you've saved so far.</p>
+    <div id="goalsTable"></div>
+    <div id="goalsProgress"></div>
+  `;
+  renderEditableTable(document.getElementById('goalsTable'), S.goals,
+    [{key:'name',label:'Goal'},{key:'targetAmount',label:'Target Amount (₹)',type:'number'},
+     {key:'currentSaved',label:'Saved So Far (₹)',type:'number'},{key:'targetYear',label:'Target Year',type:'number'},
+     {key:'category',label:'Category',type:'select',options:['Home','Education','Marriage','Retirement','Travel','Other']}],
+    {onChange:renderGoalsProgress}
+  );
+  renderGoalsProgress();
+}
+function renderGoalsProgress(){
+  const wrap = document.getElementById('goalsProgress');
+  const thisYear = new Date().getFullYear();
+  wrap.innerHTML = S.goals.map(g=>{
+    const pct = g.targetAmount>0 ? Math.min(100, Math.round(g.currentSaved/g.targetAmount*100)) : 0;
+    const yearsLeft = Math.max(1, (g.targetYear||thisYear)-thisYear);
+    const remaining = Math.max(0, g.targetAmount-g.currentSaved);
+    const monthlyNeeded = remaining/(yearsLeft*12);
+    return `<div class="chart-card">
+      <h4>${g.name} <span style="color:var(--text-faint);text-transform:none;font-family:var(--sans)">— target ${g.targetYear}</span></h4>
+      <div class="score-bar-track" style="height:10px;margin:8px 0"><div class="score-bar-fill" style="width:${pct}%;background:var(--gold)"></div></div>
+      <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:12.5px;color:var(--text-dim)">
+        <span>${fmt.format(g.currentSaved)} saved of ${fmt.format(g.targetAmount)} (${pct}%)</span>
+        <span>≈ ${fmt.format(monthlyNeeded)}/month needed</span>
+      </div>
+    </div>`;
+  }).join('') || '<p class="hint-text">No goals added yet.</p>';
+}
+
+/* ============================================================
+   MODULE: INSURANCE
+   ============================================================ */
+function renderInsuranceModule(){
+  const el = document.getElementById('cInsurance');
+  el.innerHTML = `
+    <div class="module-head"><h2>Insurance &amp; Protection Coverage</h2><span class="module-tag">module 7</span></div>
+    <p>Life, health, and asset protection — the safety net that keeps a setback from becoming a financial crisis for your family.</p>
+    <div id="insuranceTable"></div>
+    <div class="insight-box" id="insInsight"></div>
+  `;
+  renderEditableTable(document.getElementById('insuranceTable'), S.insurance,
+    [{key:'type',label:'Policy Type',type:'select',options:['Term Life','Health (Family Floater)','Health (Individual)','Vehicle','Home','Critical Illness','Other']},
+     {key:'coverAmount',label:'Cover Amount (₹)',type:'number'},{key:'annualPremium',label:'Annual Premium (₹)',type:'number'}],
+    {onChange:renderInsInsight, totalLabel:'Total annual premium', totalKey:'annualPremium'}
+  );
+  renderInsInsight();
+}
+function renderInsInsight(){
+  const life = totalLifeCover();
+  const health = totalHealthCover();
+  const recLife = annualIncome()*10;
+  document.getElementById('insInsight').innerHTML = `Term life cover: <strong>${fmt.format(life)}</strong> against a ~10x annual income benchmark of <strong>${fmt.format(recLife)}</strong> for a household with dependents. Health cover: <strong>${fmt.format(health)}</strong> — for a family with children, ₹15-25L family floater cover is a common benchmark in most metro cities today.`;
+}
+
+/* ============================================================
+   MODULE: SUBSCRIPTIONS
+   ============================================================ */
+function renderSubsModule(){
+  const el = document.getElementById('cSubs');
+  el.innerHTML = `
+    <div class="module-head"><h2>Subscriptions &amp; Recurring Payments</h2><span class="module-tag">module 8</span></div>
+    <p>Small recurring charges add up quietly — track them here so nothing renews unnoticed.</p>
+    <div id="subsTable"></div>
+    <div class="insight-box" id="subsInsight"></div>
+  `;
+  renderEditableTable(document.getElementById('subsTable'), S.subscriptions,
+    [{key:'name',label:'Subscription'},{key:'amount',label:'Amount (₹)',type:'number'},
+     {key:'cycle',label:'Billing Cycle',type:'select',options:['Monthly','Yearly']}],
+    {onChange:renderSubsInsight}
+  );
+  renderSubsInsight();
+}
+function renderSubsInsight(){
+  const monthly = totalMonthlySubs();
+  document.getElementById('subsInsight').innerHTML = `Recurring subscriptions cost you approximately <strong>${fmt.format(monthly)}/month</strong> (${fmt.format(monthly*12)}/year) — worth a periodic review for anything no longer used.`;
+}
+
+/* ============================================================
+   MODULE: WHAT-IF SIMULATORS
+   ============================================================ */
+function renderSimModule(){
+  const el = document.getElementById('cSim');
+  el.innerHTML = `
+    <div class="module-head"><h2>What-If Simulators</h2><span class="module-tag">module 9</span></div>
+    <p>Model future outcomes before committing real money — SIP growth, retirement corpus adequacy, and loan prepayment savings.</p>
+
+    <div class="sim-card">
+      <h3 style="font-size:16px">SIP Growth Projection</h3>
+      <div class="sim-inputs">
+        <div class="sim-field"><label>Monthly SIP (₹)</label><input type="number" id="sipAmount" value="${Math.max(10000,totalInvestmentSIP())}"></div>
+        <div class="sim-field"><label>Expected annual return (%)</label><input type="number" id="sipReturn" value="12"></div>
+        <div class="sim-field"><label>Duration (years)</label><input type="number" id="sipYears" value="15"></div>
+      </div>
+      <div id="sipChart"></div>
+      <div class="sim-result" id="sipResult"></div>
+    </div>
+
+    <div class="sim-card">
+      <h3 style="font-size:16px">Retirement Corpus Calculator</h3>
+      <div class="sim-inputs">
+        <div class="sim-field"><label>Current age</label><input type="number" id="retAge" value="42"></div>
+        <div class="sim-field"><label>Retirement age</label><input type="number" id="retTargetAge" value="60"></div>
+        <div class="sim-field"><label>Current monthly expense (₹)</label><input type="number" id="retExpense" value="${Math.max(30000,totalMonthlyOutflow())}"></div>
+        <div class="sim-field"><label>Inflation (%)</label><input type="number" id="retInflation" value="6"></div>
+        <div class="sim-field"><label>Post-retirement return (%)</label><input type="number" id="retReturn" value="7"></div>
+      </div>
+      <div class="sim-result" id="retResult"></div>
+    </div>
+
+    <div class="sim-card">
+      <h3 style="font-size:16px">Loan Prepayment Simulator</h3>
+      <div class="sim-inputs">
+        <div class="sim-field"><label>Loan outstanding (₹)</label><input type="number" id="loanOutstanding" value="${S.debts[0]?S.debts[0].outstanding:2000000}"></div>
+        <div class="sim-field"><label>Interest rate (%)</label><input type="number" id="loanRate" value="${S.debts[0]?S.debts[0].rate:8.5}" step="0.1"></div>
+        <div class="sim-field"><label>Remaining tenure (months)</label><input type="number" id="loanTenure" value="${S.debts[0]?S.debts[0].tenureMonths:150}"></div>
+        <div class="sim-field"><label>Extra monthly prepayment (₹)</label><input type="number" id="loanExtra" value="10000"></div>
+      </div>
+      <div class="sim-result" id="loanResult"></div>
+    </div>
+  `;
+  ['sipAmount','sipReturn','sipYears'].forEach(id=>document.getElementById(id).addEventListener('input', runSipSim));
+  ['retAge','retTargetAge','retExpense','retInflation','retReturn'].forEach(id=>document.getElementById(id).addEventListener('input', runRetirementSim));
+  ['loanOutstanding','loanRate','loanTenure','loanExtra'].forEach(id=>document.getElementById(id).addEventListener('input', runLoanSim));
+  runSipSim(); runRetirementSim(); runLoanSim();
+}
+
+function runSipSim(){
+  const p = parseFloat(document.getElementById('sipAmount').value)||0;
+  const annualReturn = parseFloat(document.getElementById('sipReturn').value)||0;
+  const years = parseFloat(document.getElementById('sipYears').value)||1;
+  const r = annualReturn/100/12;
+  const n = years*12;
+  const fv = r>0 ? p*((Math.pow(1+r,n)-1)/r)*(1+r) : p*n;
+  const invested = p*n;
+  const series = [];
+  for(let y=0;y<=years;y++){
+    const nm = y*12;
+    const fvY = r>0 ? p*((Math.pow(1+r,nm)-1)/r)*(1+r) : p*nm;
+    series.push({label:'Y'+y, value: y===0?0:fvY});
+  }
+  document.getElementById('sipChart').innerHTML = svgLineProjection(series, 600, 200, '#4FAE8C');
+  document.getElementById('sipResult').innerHTML = `
+    <div><div class="sv">${fmt.format(fv)}</div><div class="sl">Projected value</div></div>
+    <div><div class="sv" style="color:var(--info)">${fmt.format(invested)}</div><div class="sl">Total invested</div></div>
+    <div><div class="sv" style="color:var(--gold)">${fmt.format(fv-invested)}</div><div class="sl">Wealth gained</div></div>
+  `;
+}
+
+function runRetirementSim(){
+  const curAge = parseFloat(document.getElementById('retAge').value)||30;
+  const retAge = parseFloat(document.getElementById('retTargetAge').value)||60;
+  const monthlyExp = parseFloat(document.getElementById('retExpense').value)||0;
+  const inflation = parseFloat(document.getElementById('retInflation').value)||6;
+  const postReturn = parseFloat(document.getElementById('retReturn').value)||6;
+  const yearsToRet = Math.max(1, retAge-curAge);
+  const lifeExpectancyYears = 25;
+  const futureMonthlyExp = monthlyExp*Math.pow(1+inflation/100, yearsToRet);
+  const realReturn = ((1+postReturn/100)/(1+inflation/100))-1;
+  const monthsInRetirement = lifeExpectancyYears*12;
+  const rM = realReturn/12;
+  const corpusNeeded = rM>0
+    ? futureMonthlyExp * ((1-Math.pow(1+rM,-monthsInRetirement))/rM)
+    : futureMonthlyExp*monthsInRetirement;
+  const currentCorpus = totalInvestmentValue();
+  const growthOfCurrent = currentCorpus*Math.pow(1+postReturn/100, yearsToRet);
+  const gap = Math.max(0, corpusNeeded-growthOfCurrent);
+  const r = 0.12/12;
+  const n = yearsToRet*12;
+  const monthlySIPNeeded = r>0 ? gap / (((Math.pow(1+r,n)-1)/r)*(1+r)) : gap/n;
+
+  document.getElementById('retResult').innerHTML = `
+    <div><div class="sv">${fmt.format(corpusNeeded)}</div><div class="sl">Corpus needed at retirement</div></div>
+    <div><div class="sv" style="color:var(--info)">${fmt.format(growthOfCurrent)}</div><div class="sl">Current investments, grown</div></div>
+    <div><div class="sv" style="color:${gap>0?'var(--danger)':'var(--jade)'}">${gap>0?fmt.format(monthlySIPNeeded)+'/mo':'On track'}</div><div class="sl">${gap>0?'Additional SIP needed':'Gap status'}</div></div>
+  `;
+}
+
+function runLoanSim(){
+  const outstanding = parseFloat(document.getElementById('loanOutstanding').value)||0;
+  const rate = parseFloat(document.getElementById('loanRate').value)||0;
+  const tenure = parseFloat(document.getElementById('loanTenure').value)||1;
+  const extra = parseFloat(document.getElementById('loanExtra').value)||0;
+  const r = rate/100/12;
+  const emi = r>0 ? outstanding*r*Math.pow(1+r,tenure)/(Math.pow(1+r,tenure)-1) : outstanding/tenure;
+
+  function amortize(monthlyExtra){
+    let bal = outstanding, months=0, totalInterest=0;
+    while(bal>0 && months<1200){
+      const interest = bal*r;
+      let principal = emi - interest + monthlyExtra;
+      if(principal>bal) principal = bal;
+      bal -= principal;
+      totalInterest += interest;
+      months++;
+    }
+    return {months, totalInterest};
+  }
+  const base = amortize(0);
+  const withExtra = amortize(extra);
+  const interestSaved = base.totalInterest - withExtra.totalInterest;
+  const monthsSaved = base.months - withExtra.months;
+
+  document.getElementById('loanResult').innerHTML = `
+    <div><div class="sv">${fmt.format(emi)}</div><div class="sl">Current EMI</div></div>
+    <div><div class="sv" style="color:var(--jade)">${fmt.format(interestSaved)}</div><div class="sl">Interest saved</div></div>
+    <div><div class="sv" style="color:var(--gold)">${monthsSaved} mo</div><div class="sl">Tenure reduced by</div></div>
+  `;
+}
+
+/* ============================================================
+   MODULE: REPORTS
+   ============================================================ */
+function renderReportModule(){
+  const el = document.getElementById('cReport');
+  const hs = computeHealthScore();
+  el.innerHTML = `
+    <div class="module-head"><h2>Reports &amp; Printable Summary</h2><span class="module-tag">module 10</span></div>
+    <p>A consolidated snapshot you can print or save as a PDF for your own records or a financial advisor.</p>
+    <div class="control-row"><button class="btn" id="printReportBtn">🖨 Print this report</button></div>
+    <div class="card">
+      <h3>Snapshot — ${new Date().toLocaleDateString('en-IN', {year:'numeric', month:'long', day:'numeric'})}</h3>
+      <div class="metric-grid" style="margin-bottom:16px">
+        <div class="metric-cell pos"><div class="mv">${fmt.format(totalMonthlyIncome())}</div><div class="ml">Monthly Income</div></div>
+        <div class="metric-cell"><div class="mv">${fmt.format(totalMonthlyOutflow())}</div><div class="ml">Monthly Outflow</div></div>
+        <div class="metric-cell gold"><div class="mv">${fmt.format(netWorth())}</div><div class="ml">Net Worth</div></div>
+        <div class="metric-cell"><div class="mv">${hs.overall}/100</div><div class="ml">Health Score</div></div>
+        <div class="metric-cell"><div class="mv">${fmt.format(totalDebtOutstanding())}</div><div class="ml">Total Debt</div></div>
+        <div class="metric-cell pos"><div class="mv">${fmt.format(totalInvestmentValue())}</div><div class="ml">Total Investments</div></div>
+      </div>
+      <p style="font-size:13px;color:var(--text-dim)">This report reflects data entered across all modules of the Personal Financial Command Center as of the date above. Figures are self-reported and for personal planning purposes only.</p>
+    </div>
+  `;
+  document.getElementById('printReportBtn').addEventListener('click', ()=>window.print());
+}
+
+/* ============================================================
+   MODULE: TIPS & RESOURCES
+   ============================================================ */
+const DEFAULT_CHECKLIST = [
+  'Automate SIP/investment transfers on salary day, before discretionary spending',
+  'Review and rebalance portfolio allocation at least once a year',
+  'Confirm term life cover is at least 10x annual income',
+  'Confirm family floater health cover is adequate for current medical inflation',
+  'Keep 6 months of expenses in a liquid emergency fund',
+  'Review and cancel unused subscriptions quarterly',
+  'Update nominee details on all investment and insurance accounts',
+  'Revisit retirement corpus target every 2-3 years as expenses change',
+  'Maintain a written will, especially with dependents in the household',
+  'Track EMI-to-income ratio and avoid exceeding 40%'
+];
+function renderTipsModule(){
+  const el = document.getElementById('cTips');
+  el.innerHTML = `
+    <div class="module-head"><h2>Financial Tips &amp; Literacy</h2><span class="module-tag">module 11</span></div>
+    <div class="two-col">
+      <div class="card">
+        <h3>Planning checklist</h3>
+        <ul class="checklist" id="checklistUl"></ul>
+      </div>
+      <div class="card">
+        <h3>Quick tips for aggressive, disciplined wealth growth</h3>
+        <ul class="checklist" style="list-style:none">
+          <li>Prioritize increasing your savings rate over chasing higher returns — it's the lever most within your control.</li>
+          <li>Keep emergency funds and long-term investments separate; don't let market dips tempt you into touching your safety net.</li>
+          <li>Higher expected returns (equity) usually mean higher short-term volatility — match allocation to your actual time horizon per goal, not just overall risk appetite.</li>
+          <li>Review insurance cover after major life events — a new child, a home loan, or a salary jump all shift the right coverage amount.</li>
+          <li>Debt isn't inherently bad — a low-rate home loan while building wealth elsewhere can be more efficient than an all-out prepayment race.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2 style="margin-top:40px">Resources &amp; further learning</h2>
+    <div class="resource-grid">
+      <div class="resource-card"><h4>Books</h4><ul>
+        <li>The Psychology of Money — Morgan Housel</li>
+        <li>Let's Talk Money — Monika Halan</li>
+        <li>The Intelligent Investor — Benjamin Graham</li>
+      </ul></div>
+      <div class="resource-card"><h4>Tools &amp; calculators</h4><ul>
+        <li>SEBI-registered mutual fund SIP calculators</li>
+        <li>EPFO passbook portal for retirement balance tracking</li>
+        <li>Income tax regime comparison calculators (old vs new)</li>
+      </ul></div>
+      <div class="resource-card"><h4>Communities</h4><ul>
+        <li>r/IndiaInvestments</li>
+        <li>Local SEBI-registered fee-only financial planner networks</li>
+        <li>Employer HR sessions on EPF/NPS optimization</li>
+      </ul></div>
+      <div class="resource-card"><h4>Search keywords</h4>
+        <span class="mono" style="display:block;margin-top:4px">"asset allocation by age" · "term insurance human life value calculator" · "EPF vs NPS vs PPF comparison" · "emergency fund liquid fund vs savings account"</span>
+      </div>
+      <div class="resource-card"><h4>AI prompts for further learning</h4><ul>
+        <li>"Explain the difference between EPF, PPF, and NPS for retirement planning in India."</li>
+        <li>"Walk me through how to calculate the ideal term life insurance cover for my situation."</li>
+        <li>"Compare the tax implications of the old vs new income tax regime for my salary bracket."</li>
+        <li>"Help me build a debt payoff priority order using the avalanche method."</li>
+      </ul></div>
+    </div>
+  `;
+  renderChecklist();
+}
+function renderChecklist(){
+  const ul = document.getElementById('checklistUl');
+  ul.innerHTML = DEFAULT_CHECKLIST.map((item,i)=>{
+    const checked = !!S.checklist[i];
+    return `<li class="${checked?'checked':''}"><input type="checkbox" data-idx="${i}" ${checked?'checked':''}> <span>${item}</span></li>`;
+  }).join('');
+  ul.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      S.checklist[cb.dataset.idx] = cb.checked;
+      saveStateQuiet();
+      cb.closest('li').classList.toggle('checked', cb.checked);
+    });
+  });
+}
+
+/* ============================================================
+   NAV
+   ============================================================ */
+const MODULES_NAV = [
+  {id:'hero', label:'Overview'},
+  {id:'mod-income', label:'Income'},
+  {id:'mod-budget', label:'Budget'},
+  {id:'mod-savings', label:'Savings'},
+  {id:'mod-debt', label:'Debt'},
+  {id:'mod-invest', label:'Investments'},
+  {id:'mod-goals', label:'Goals'},
+  {id:'mod-insurance', label:'Insurance'},
+  {id:'mod-subs', label:'Subscriptions'},
+  {id:'mod-sim', label:'Simulators'},
+  {id:'mod-report', label:'Reports'},
+  {id:'mod-tips', label:'Tips'}
+];
+function renderModNav(){
+  const row = document.getElementById('modnavRow');
+  row.innerHTML = MODULES_NAV.map(m=>`<div class="modpill" data-target="${m.id}">${m.label}</div>`).join('');
+  row.querySelectorAll('.modpill').forEach(p=>{
+    p.addEventListener('click', ()=>document.getElementById(p.dataset.target).scrollIntoView({behavior:'smooth'}));
+  });
+}
+
+/* ============================================================
+   TOP CONTROLS
+   ============================================================ */
+document.getElementById('sampleBtn').addEventListener('click', ()=>{ loadSample(); renderAll(); });
+document.getElementById('clearBtn').addEventListener('click', ()=>{
+  if(confirm('This will erase all entered data in this browser. Continue?')){ S = emptyState(); saveState(); }
+});
+document.getElementById('printBtn').addEventListener('click', ()=>window.print());
+document.getElementById('themeToggle').addEventListener('click', ()=>{
+  document.documentElement.classList.toggle('light');
+  const isLight = document.documentElement.classList.contains('light');
+  document.getElementById('themeToggle').textContent = isLight ? '🌙 Dark' : '☀ Light';
+  S.theme = isLight?'light':'dark'; saveStateQuiet();
+});
+
+/* ============================================================
+   INIT
+   ============================================================ */
+function renderAll(){
+  renderOverview();
+  renderIncomeModule();
+  renderBudgetModule();
+  renderSavingsModule();
+  renderDebtModule();
+  renderInvestModule();
+  renderGoalsModule();
+  renderInsuranceModule();
+  renderSubsModule();
+  renderSimModule();
+  renderReportModule();
+  renderTipsModule();
+}
+function init(){
+  loadState();
+  if(S.theme==='light'){ document.documentElement.classList.add('light'); document.getElementById('themeToggle').textContent='🌙 Dark'; }
+  renderModNav();
+  renderAll();
+}
+init();
+
+</script>
+</body>
+</html>
